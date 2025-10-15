@@ -1,5 +1,5 @@
 # term-project-project-sand
-memebers: 
+Members: 
 Name: Nathaniel Moreno ID: 923143270
 Name: ID:
 Name: ID:
