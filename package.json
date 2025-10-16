@@ -1,0 +1,16 @@
+{
+  "name": "term-project-project-sand",
+  "version": "1.0.0",
+  "description": "Members: \r Name: Nathaniel Moreno ID: 923143270\r Name: ID:\r Name: ID: Andre Augustin ID: 923438656\r Name: ID:",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
