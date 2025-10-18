@@ -1,8 +1,11 @@
 import express from 'express';
 
 const router = express.Router();
+
+
+
 router.get('/', (req, res) => {
-  res.send('Router is working!');
+  res.send('This from the router!');
 });
 
-export default router;
+export {router as mainRouter}; // to be used in server.ts

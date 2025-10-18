@@ -3,15 +3,19 @@
   "version": "1.0.0",
   "description": "Members: \r Name: Nathaniel Moreno ID: 923143270\r Name: ID:\r Name: ID: Andre Augustin ID: 923438656\r Name: ID:",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "start:dev": "nodemon --exec ts-node src/backend/server.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "http-errors": "^2.0.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
+    "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
