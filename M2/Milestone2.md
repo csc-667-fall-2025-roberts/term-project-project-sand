@@ -75,3 +75,7 @@ It supports all the features outlined in **Milestone 1**, including multiplayer 
 
  **Summary:**  
 This schema fully supports the gameplay flow, data persistence, and multiplayer logic described in Milestone 1. It’s normalized, scalable, and ready for backend API integration and Socket.io real-time functionality.
+
+![Database Schema Diagram](./Milestone_2_DB_Diagram.png)
+
+
