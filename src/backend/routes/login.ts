@@ -3,9 +3,9 @@ import express from "express";
 const router = express.Router();
 
 router.get("/", (req, res) => {
-  res.render("signout", {
+  res.render("login", {
     gamesListing: ["Andre", "Daniel", "Charlie", "Nate"],
   });
 });
 
-export { router as signoutRouter }; // to be used in server.ts
+export { router as loginRouter }; // to be used in server.ts

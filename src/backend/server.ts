@@ -5,7 +5,6 @@ import morgan from "morgan";
 import createHttpError from "http-errors";
 
 import { mainRouter } from "./routes/root";
-import { testRoutes } from "./routes/test";
 import { authRouter } from "./routes/auth";
 import { teamRouter } from "./routes/team";
 import { gameroomRouter } from "./routes/gameroom";
@@ -17,6 +16,7 @@ import { signoutRouter } from "./routes/signout";
 import { gameresultsRouter } from "./routes/gameresults";
 import { howtoplayRouter } from "./routes/howtoplay";
 import { creategameRouter } from "./routes/creategame";
+import { loginRouter } from "./routes/login";
 
 const app = express();
 
@@ -30,18 +30,22 @@ app.set("view engine", "ejs");
 // mount the routers
 app.use("/", mainRouter);
 
-app.use("/test", testRoutes);
 app.use("/auth", authRouter);
 app.use("/lobby", lobbyRouters);
 app.use("/dashboard", dashboardRouter);
 app.use("/games", gameroomRouter);
 app.use("/team", teamRouter);
-app.use("/settings", settingsRouter);
+
+app.use("/login", loginRouter);
 app.use("/signin", signinRouter);
 app.use("/signout", signoutRouter);
+
 app.use("/gameresults", gameresultsRouter);
 app.use("/howtoplay", howtoplayRouter);
 app.use("/creategame", creategameRouter);
+app.use("/gameroom", gameroomRouter);
+app.use("/gameresults", gameresultsRouter);
+app.use("/settings", settingsRouter);
 
 // Error handling middleware
 app.use((req, _res, next) => {

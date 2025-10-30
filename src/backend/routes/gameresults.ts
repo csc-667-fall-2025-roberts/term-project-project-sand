@@ -3,7 +3,7 @@ import express from "express";
 const router = express.Router();
 
 router.get("/", (req, res) => {
-  res.render("Game Results", {
+  res.render("gameresults", {
     gamesListing: ["Andre", "Daniel", "Charlie", "Nate"],
   });
 });
