@@ -7,7 +7,7 @@ import createHttpError from "http-errors";
 import { mainRouter } from "./routes/root";
 import { testRoutes } from "./routes/test";
 import { authRouter } from "./routes/auth";
-
+import { teamRouter } from "./routes/team";
 import { gamesRouter } from "./routes/games";
 import { lobbyRouters } from "./routes/lobby";
 import { dashboardRouter } from "./routes/dashboard";
@@ -30,6 +30,7 @@ app.use("/auth", authRouter); // for login, signup, logout, register
 app.use("/lobby", lobbyRouters); // lobby routes
 app.use("/dashboard", dashboardRouter); // game related routes
 app.use("/games", gamesRouter); // game related routes
+app.use("/team", teamRouter); // team related routes
 
 // Error handling middleware
 app.use((req, _res, next) => {
