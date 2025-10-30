@@ -1,10 +1,9 @@
-import express from 'express';
+import express from "express";
 
 const router = express.Router();
 
-router.get('/', (_req, res) => {
-    res.send('This is from the Lobby route!');
-
+router.get("/", (_req, res) => {
+  res.render("lobby", { gamesListing: ["Andre", "Daniel", "Charlie", "Nate"] });
 });
 
-export {router as lobbyRouters}; // to be used in server.ts
+export { router as lobbyRouters }; // to be used in server.ts
