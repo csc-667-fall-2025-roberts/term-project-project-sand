@@ -4,19 +4,37 @@
   "description": "Members: \r Name: Nathaniel Moreno ID: 923143270\r Name: ID:\r Name: ID: Andre Augustin ID: 923438656\r Name: ID:",
   "main": "index.js",
   "scripts": {
-    "start:dev": "nodemon --exec ts-node src/backend/server.ts"
+    "start:dev": "nodemon --exec ts-node src/backend/server.ts",
+    "migrate:create": "node-pg-migrate create -js ts --",
+    "migrate:up": "node-pg-migrate up",
+    "migrate:down": "node-pg-migrate down"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^2.2.0",
+    "ejs": "^3.1.10",
     "express": "^5.1.0",
-    "http-errors": "^2.0.0"
+    "http-errors": "^2.0.0",
+    "morgan": "^1.10.1",
+    "node-pg-migrate": "^8.0.3",
+    "pg-promise": "^12.2.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^24.9.2",
+    "@types/node-pg-migrate": "^2.3.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
     "nodemon": "^3.1.10",
+    "prettier": "^3.6.2",
+    "prettier-plugin-ejs": "^1.0.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
+  },
+  "lint-staged": {
+    "**/*": "prettier --plugin=prettier-plugin-ejs --write --ignore-unknown"
   }
 }

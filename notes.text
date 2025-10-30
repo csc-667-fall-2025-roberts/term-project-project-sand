@@ -1,0 +1,6 @@
+- prettier does the format
+
+- lint-staged and husky are packages for github hooks to commit our code
+
+- 
+
