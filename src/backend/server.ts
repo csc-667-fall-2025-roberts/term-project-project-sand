@@ -18,12 +18,17 @@ import { howtoplayRouter } from "./routes/howtoplay";
 import { creategameRouter } from "./routes/creategame";
 import { loginRouter } from "./routes/login";
 
+// OCT 9th 2025 video stopped at 58:07
+// use npm run start:dev to server the server
+
 const app = express();
 
 const PORT = process.env.PORT || 3005;
 
 app.use(morgan("dev"));
 app.use(express.static(path.join("dist", "public")));
+
+//setting up our view engine allows us to create templetes that generate HTML dynamically
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
@@ -47,12 +52,12 @@ app.use("/gameroom", gameroomRouter);
 app.use("/gameresults", gameresultsRouter);
 app.use("/settings", settingsRouter);
 
-// Error handling middleware
+// Error handling middleware for 404 - Not Found
 app.use((req, _res, next) => {
   next(createHttpError(404));
 });
 
-// Start the server
+// Start the server and listen on the specified PORT
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

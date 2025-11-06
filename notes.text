@@ -2,5 +2,8 @@
 
 - lint-staged and husky are packages for github hooks to commit our code
 
-- 
+- npx lint-staged
 
+
+so now in our devlopment environment when we make changes to either front-end or back-end fies
+files we get compolie in the public folder  
