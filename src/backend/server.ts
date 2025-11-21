@@ -3,6 +3,7 @@ import * as path from "path";
 import express from "express";
 import morgan from "morgan";
 import createHttpError from "http-errors";
+import { logger } from "./utils/logger";
 
 import { mainRouter } from "./routes/root";
 import { authRouter } from "./routes/auth";
@@ -53,11 +54,11 @@ app.use("/gameresults", gameresultsRouter);
 app.use("/settings", settingsRouter);
 
 // Error handling middleware for 404 - Not Found
-app.use((req, _res, next) => {
+app.use((_req, _res, next) => {
   next(createHttpError(404));
 });
 
 // Start the server and listen on the specified PORT
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  logger.info(`Server is running on http://localhost:${PORT}`);
 });

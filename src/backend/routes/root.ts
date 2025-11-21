@@ -1,9 +1,8 @@
 import express from "express";
-import { rootCertificates } from "tls";
 
 const router = express.Router();
 
-router.get("/", (req, res) => {
+router.get("/", (_req, res) => {
   res.render("root", { gamesListing: ["a", "b", "c", "etc"] });
 });
 

@@ -11,5 +11,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["src/backend/**/*"]
+  "include": ["src/backend/**/*", "src/frontend/**/*"],
+  "exclude": ["src/public/**/*"]
 }

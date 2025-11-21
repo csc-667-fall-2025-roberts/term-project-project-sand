@@ -4,52 +4,59 @@
   "description": "Members: \r Name: Nathaniel Moreno ID: 923143270\r Name: ID:\r Name: ID: Andre Augustin ID: 923438656\r Name: ID:",
   "main": "index.js",
   "scripts": {
-    "build:backend": "rm -rf; tsc; cp -R src/backend/views dist/views",
-    "build:frontend": "esbuild src/frontend/entrypoint.ts --bundle --outfile=src/public/js/bundle.js --sourcemap --target=es2020",
+    "build:backend": "tsc && cp -R src/backend/views dist/backend/views",
+    "build:frontend": "mkdir -p dist/public/js && esbuild src/frontend/entrypoint.ts --bundle --outfile=dist/public/js/bundle.js --sourcemap --target=es2020",
     "build": "rm -rf dist && npm run build:backend && npm run build:frontend",
-    "start": "node dist/server.js",
-    "dev:frontend": "echo\"hello",
     "dev:backend": "nodemon --exec ts-node src/backend/server.ts",
-    "dev:live": "browser-sync start --proxy 'http://localhost:3005' --files 'src/backend/views/**/*.ejs' 'src/backend/public/**/* --no-ui --no-open ",
-    "start:dev": "concurrently --names \"backend, frontend, live\" --prefix-colors \"green,blue, magenta\" \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:live\"",
+    "dev:frontend": "npm run build:frontend -- --watch",
+    "dev:live": "browser-sync start --proxy 'http://localhost:3005' --files 'src/backend/views/**/*.ejs' 'src/frontend/**/*.ts' 'dist/public/**/*' --no-ui --no-open",
+    "dev:public": "mkdir -p dist/public",
+    "dev": "npm run dev:public && concurrently --names \"backend,frontend,live\" --prefix-colors \"green,blue,magenta\" \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:live\"",
+    "format": "prettier --plugin=prettier-plugin-ejs --write --ignore-unknown src",
+    "lint": "eslint",
     "migrate:create": "node-pg-migrate create -js ts --",
+    "migrate:down": "node-pg-migrate down",
     "migrate:up": "node-pg-migrate up",
-    "migrate:down": "node-pg-migrate down"
+    "start": "node dist/backend/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^2.2.0",
+    "dotenv": "^17.2.3",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
-    "http-errors": "^2.0.0",
+    "http-errors": "^2.0.1",
     "morgan": "^1.10.1",
     "node-pg-migrate": "^8.0.3",
-    "pg-promise": "^12.2.0"
+    "pg-promise": "^12.3.0",
+    "winston": "^3.18.3"
   },
   "devDependencies": {
-    "@types/express": "^5.0.3",
+    "@eslint/js": "^9.39.1",
+    "@types/express": "^5.0.5",
     "@types/morgan": "^1.9.10",
-    "@types/node": "^24.9.2",
+    "@types/node": "^24.10.1",
     "@types/node-pg-migrate": "^2.3.1",
-    "@typescript-eslint/eslint-plugin": "^8.46.3",
-    "@typescript-eslint/parser": "^8.46.3",
+    "@typescript-eslint/eslint-plugin": "^8.47.0",
+    "@typescript-eslint/parser": "^8.47.0",
     "browser-sync": "^3.0.4",
     "concurrently": "^9.2.1",
-    "esbuild": "^0.25.12",
+    "esbuild": "^0.27.0",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "husky": "^9.1.7",
-    "lint-staged": "^16.2.6",
-    "nodemon": "^3.1.10",
+    "lint-staged": "^16.2.7",
+    "nodemon": "^3.1.11",
     "prettier": "^3.6.2",
     "prettier-plugin-ejs": "^1.0.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.47.0"
   },
   "lint-staged": {
-    "**/*": "prettier --plugin=prettier-plugin-ejs --write --ignore-unknown"
+    "**/*": "npm run format"
   }
 }

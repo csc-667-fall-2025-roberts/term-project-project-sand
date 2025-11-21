@@ -1,12 +1,13 @@
 //middleware is a special function following format that has access to request and response objects
 import { NextFunction, Request, Response } from "express";
+import { logger } from "../utils/logger";
 
 const requestTimestampMiddleware = (
   _req: Request,
   _res: Response,
   next: NextFunction,
 ) => {
-  console.log(
+  logger.debug(
     `Request received for ${_req.url} at ${new Date().toLocaleString()}`,
   );
 

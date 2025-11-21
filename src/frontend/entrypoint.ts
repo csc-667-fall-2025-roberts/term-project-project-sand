@@ -1,10 +1,11 @@
 //use css selector to find the element
+
 const button: Element | null = document.querySelector("#test-button");
 
-button?.addEventListener("Click", (event) => {
+button?.addEventListener("click", (event) => {
   event.preventDefault();
 
   setTimeout(() => {
-    alert("Button clicked was 1 seconds ago!");
+    alert("Button clicked was 1 second ago!");
   }, 1000);
 });
