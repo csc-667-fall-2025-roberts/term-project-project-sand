@@ -16,6 +16,7 @@
           <p class="text-sm text-amber-50 font-semibold">Game: <%= game?.name || 'Loading...' %></p>
         </div>
         <div class="flex items-center gap-4">
+          <span class="text-white font-semibold">Welcome, <span class="font-bold"><%= user?.display_name || 'Player' %></span></span>
           <span class="text-white font-semibold">Game Code: <span class="font-mono font-bold bg-white/20 px-2 py-1 rounded"><%= game?.game_code || 'N/A' %></span></span>
           <a href="/lobby" class="bg-white/20 hover:bg-white/30 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm">Back to Lobby</a>
         </div>

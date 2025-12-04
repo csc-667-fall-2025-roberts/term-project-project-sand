@@ -3,7 +3,7 @@ import db from "../db/connection";
 
 const router = express.Router();
 
-router.get("/", async (_req, res) => {
+router.get("/", async (req, res) => {
   try {
     // Fetch all games with player counts
     const games = await db.any(`
@@ -26,10 +26,21 @@ router.get("/", async (_req, res) => {
       LIMIT 50
     `);
 
+    // Get user from session
+    const userId = (req.session as any)?.userId;
+    let user = { display_name: "Player" };
+    
+    if (userId) {
+      const userData = await db.oneOrNone("SELECT id, email, display_name FROM users WHERE id = $1", [userId]);
+      if (userData) {
+        user = userData;
+      }
+    }
+
     res.render("lobby", {
       games: games || [],
       messages: messages || [],
-      user: { display_name: "Player" }, // TODO: Get from session
+      user: user,
     });
   } catch (error) {
     console.error("Error fetching lobby data:", error);
@@ -48,20 +59,12 @@ router.post("/create", async (req, res) => {
     // Generate a random game code
     const game_code = Math.random().toString(36).substring(2, 8).toUpperCase();
     
-    // TODO: Get user_id from session when auth is implemented
-    // For now, get the first user from the database as a placeholder
-    // In production, this should be: const user_id = req.session.userId;
-    let created_by: string;
-    try {
-      const firstUser = await db.oneOrNone('SELECT id FROM users LIMIT 1');
-      if (!firstUser) {
-        return res.redirect("/lobby?error=No users found. Please sign up first.");
-      }
-      created_by = firstUser.id;
-    } catch (userError) {
-      console.error("Error finding user:", userError);
-      return res.redirect("/lobby?error=Please sign up first before creating a game.");
+    // Get user_id from session
+    const userId = (req.session as any)?.userId;
+    if (!userId) {
+      return res.redirect("/auth/login?error=Please log in to create a game");
     }
+    const created_by = userId;
     
     const game = await db.one(
       `INSERT INTO games (name, game_code, max_players, status, created_by)
@@ -69,6 +72,8 @@ router.post("/create", async (req, res) => {
        RETURNING *`,
       [game_name, game_code, parseInt(max_players), created_by]
     );
+
+    console.log(`[Lobby] Game created successfully: ${game.name} (${game.game_code}) with ID ${game.id}`);
 
     res.redirect(`/games/${game.id}`);
   } catch (error) {

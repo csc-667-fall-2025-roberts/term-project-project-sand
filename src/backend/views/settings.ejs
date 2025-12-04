@@ -1,16 +1,154 @@
-<html>
-  <head>
-    <link rel="stylesheet" href="temp.css" />
-  </head>
-  <body>
-    <h1>WEBOPOLY'S SETTINGS</h1>
-    <ul>
-      <% for(let i = 0; i < gamesListing.length; i++) { %>
-      <li>
-        <%= i %>
-        <%= gamesListing[i] %>
-      </li>
-      <% } %>
-    </ul>
-  </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Settings - Webopoly</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-pink-50">
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 shadow-xl text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-black text-white drop-shadow-lg">WEBOPOLY</h1>
+        <div class="flex items-center gap-4">
+          <a href="/lobby" class="bg-white/20 hover:bg-white/30 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm">Back to Lobby</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6">
+      <h2 class="text-3xl font-bold text-gray-800 mb-2">Account Settings</h2>
+      <p class="text-gray-600">Manage your account information and preferences</p>
+    </div>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="error-message mb-4">
+        <%= error %>
+      </div>
+    <% } %>
+
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div class="success-message mb-4">
+        <%= success %>
+      </div>
+    <% } %>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Account Information -->
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Account Information</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <div class="input-field bg-gray-50" style="cursor: not-allowed;">
+              <%= user?.email || 'N/A' %>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Account Created</label>
+            <div class="input-field bg-gray-50" style="cursor: not-allowed;">
+              <%= user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A' %>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">User ID</label>
+            <div class="input-field bg-gray-50 text-xs font-mono" style="cursor: not-allowed;">
+              <%= user?.id || 'N/A' %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Update Display Name -->
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Update Display Name</h3>
+        <form action="/settings/update-name" method="POST" class="space-y-4">
+          <div>
+            <label for="display_name" class="block text-sm font-medium text-gray-700 mb-2">
+              Display Name
+            </label>
+            <input
+              type="text"
+              id="display_name"
+              name="display_name"
+              required
+              class="input-field"
+              placeholder="Enter your display name"
+              value="<%= user?.display_name || '' %>"
+            />
+            <p class="text-xs text-gray-500 mt-1">This is the name other players will see</p>
+          </div>
+
+          <button type="submit" class="btn-primary w-full">
+            Update Display Name
+          </button>
+        </form>
+      </div>
+
+      <!-- Change Password -->
+      <div class="card lg:col-span-2">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Change Password</h3>
+        <form action="/settings/update-password" method="POST" class="space-y-4 max-w-md">
+          <div>
+            <label for="current_password" class="block text-sm font-medium text-gray-700 mb-2">
+              Current Password
+            </label>
+            <input
+              type="password"
+              id="current_password"
+              name="current_password"
+              required
+              class="input-field"
+              placeholder="Enter your current password"
+              autocomplete="current-password"
+            />
+          </div>
+
+          <div>
+            <label for="new_password" class="block text-sm font-medium text-gray-700 mb-2">
+              New Password
+            </label>
+            <input
+              type="password"
+              id="new_password"
+              name="new_password"
+              required
+              class="input-field"
+              placeholder="Enter new password (min. 6 characters)"
+              minlength="6"
+              autocomplete="new-password"
+            />
+          </div>
+
+          <div>
+            <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-2">
+              Confirm New Password
+            </label>
+            <input
+              type="password"
+              id="confirm_password"
+              name="confirm_password"
+              required
+              class="input-field"
+              placeholder="Confirm your new password"
+              minlength="6"
+              autocomplete="new-password"
+            />
+          </div>
+
+          <button type="submit" class="btn-primary">
+            Update Password
+          </button>
+        </form>
+      </div>
+    </div>
+  </main>
+</body>
 </html>

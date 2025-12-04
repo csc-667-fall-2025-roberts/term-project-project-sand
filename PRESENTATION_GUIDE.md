@@ -17,6 +17,7 @@ Before starting, make sure you have:
    - Default port: 5432
    - Default username: postgres
    - You'll need your PostgreSQL password
+   - Create database named webopoly if needed
 
 3. **Git repository cloned** (if working from a shared repo)
    - All code files should be present

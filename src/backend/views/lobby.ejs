@@ -14,7 +14,10 @@
         <h1 class="text-3xl font-black text-white drop-shadow-lg">WEBOPOLY</h1>
         <div class="flex items-center gap-4">
           <span class="text-white font-semibold">Welcome, <span class="font-bold"><%= user?.display_name || 'Player' %></span></span>
-          <a href="/auth/logout" class="bg-white/20 hover:bg-white/30 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm">Logout</a>
+          <a href="/settings" class="bg-white/20 hover:bg-white/30 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm">Settings</a>
+          <form action="/auth/logout" method="POST" class="inline">
+            <button type="submit" class="bg-white/20 hover:bg-white/30 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm">Logout</button>
+          </form>
         </div>
       </div>
     </div>

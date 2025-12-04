@@ -6,6 +6,7 @@ const router = express.Router();
 router.get("/:id", async (req, res) => {
   try {
     const gameId = req.params.id;
+    const userId = (req.session as any)?.userId;
 
     // Fetch game details
     const game = await db.oneOrNone("SELECT * FROM games WHERE id = $1", [gameId]);
@@ -15,6 +16,12 @@ router.get("/:id", async (req, res) => {
         status: 404,
         message: "Game not found",
       });
+    }
+
+    // Get current user info from session
+    let user = null;
+    if (userId) {
+      user = await db.oneOrNone("SELECT id, email, display_name FROM users WHERE id = $1", [userId]);
     }
 
     // Fetch all participants with user info
@@ -29,8 +36,23 @@ router.get("/:id", async (req, res) => {
       ORDER BY gp.joined_at
     `, [gameId]);
 
-    // Fetch properties owned by current player (placeholder - will need user session)
-    // For now, get properties owned by the first participant
+    // Get current player - find participant for logged-in user, or use first participant
+    let currentPlayer = null;
+    if (userId) {
+      currentPlayer = players.find((p: any) => p.user_id === userId);
+    }
+    if (!currentPlayer && players.length > 0) {
+      currentPlayer = players[0];
+    }
+    if (!currentPlayer) {
+      currentPlayer = {
+        cash: 1500,
+        position: 0,
+        token_color: "blue",
+      };
+    }
+
+    // Fetch properties owned by current player
     const properties = await db.any(`
       SELECT 
         o.*,
@@ -40,17 +62,9 @@ router.get("/:id", async (req, res) => {
       FROM ownerships o
       JOIN tiles t ON o.tile_id = t.id
       JOIN game_participants gp ON o.participant_id = gp.id
-      WHERE o.game_id = $1
-      ORDER BY gp.joined_at
-      LIMIT 10
-    `, [gameId]);
-
-    // Get current player (placeholder - will need user session)
-    const currentPlayer = players[0] || {
-      cash: 1500,
-      position: 0,
-      token_color: "blue",
-    };
+      WHERE o.game_id = $1 AND gp.id = $2
+      ORDER BY t.position
+    `, [gameId, currentPlayer.id || null]);
 
     // Fetch tile at current player position
     const currentTile = await db.oneOrNone(
@@ -95,6 +109,7 @@ router.get("/:id", async (req, res) => {
       currentTile: currentTile,
       isOwned: isOwned,
       owner: owner,
+      user: user || { display_name: "Player" },
     });
   } catch (error) {
     console.error("Error fetching game data:", error);
@@ -102,6 +117,63 @@ router.get("/:id", async (req, res) => {
       status: 500,
       message: "Error loading game",
     });
+  }
+});
+
+// POST endpoint for joining a game (creates participant)
+router.post("/:id/join", async (req, res) => {
+  try {
+    const gameId = req.params.id;
+    const userId = (req.session as any)?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Please log in to join a game" });
+    }
+
+    // Check if participant already exists
+    const existingParticipant = await db.oneOrNone(
+      `SELECT * FROM game_participants WHERE game_id = $1 AND user_id = $2`,
+      [gameId, userId]
+    );
+
+    if (existingParticipant) {
+      console.log(`[Game] User ${userId} already a participant in game ${gameId}`);
+      return res.json({ success: true, message: "Already joined this game", participant: existingParticipant });
+    }
+
+    // Check game max players
+    const game = await db.oneOrNone('SELECT max_players, status FROM games WHERE id = $1', [gameId]);
+    if (!game) {
+      return res.status(404).json({ error: "Game not found" });
+    }
+
+    const currentPlayers = await db.one(
+      `SELECT COUNT(*) as count FROM game_participants WHERE game_id = $1`,
+      [gameId]
+    );
+
+    if (parseInt(currentPlayers.count) >= game.max_players) {
+      return res.status(400).json({ error: "Game is full" });
+    }
+
+    // Create participant
+    const       participant = await db.one(
+        `INSERT INTO game_participants (game_id, user_id, cash, position, token_color)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [gameId, userId, 1500, 0, 'blue']
+      );
+
+      console.log(`[Game] Participant created: User ${userId} joined game ${gameId} with participant ID ${participant.id}`);
+
+    res.json({
+      success: true,
+      message: "Successfully joined game",
+      participant: participant,
+    });
+  } catch (error) {
+    console.error("Error joining game:", error);
+    res.status(500).json({ error: "Failed to join game" });
   }
 });
 
@@ -115,25 +187,24 @@ router.post("/:id/buy", async (req, res) => {
       return res.status(400).json({ error: "Position is required" });
     }
 
-    // TODO: Get user_id from session when auth is implemented
-    // For now, get the first participant in this game, or create one if none exists
+    // Get user_id from session
+    const userId = (req.session as any)?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Please log in to buy properties" });
+    }
+
+    // Get participant for this user and game, or create one if none exists
     let participant = await db.oneOrNone(
-      `SELECT * FROM game_participants WHERE game_id = $1 ORDER BY joined_at LIMIT 1`,
-      [gameId]
+      `SELECT * FROM game_participants WHERE game_id = $1 AND user_id = $2`,
+      [gameId, userId]
     );
     
     if (!participant) {
-      // Create a participant with the first user
-      const firstUser = await db.oneOrNone('SELECT id FROM users LIMIT 1');
-      if (!firstUser) {
-        return res.status(400).json({ error: "No user found. Please create a user first." });
-      }
-      
       participant = await db.one(
         `INSERT INTO game_participants (game_id, user_id, cash, position, token_color)
          VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
-        [gameId, firstUser.id, 1500, 0, 'blue']
+        [gameId, userId, 1500, 0, 'blue']
       );
     }
 
@@ -232,6 +303,8 @@ router.post("/:id/buy", async (req, res) => {
         [gameId, participant.id, -tile.purchase_price, `Purchased ${tile.name}`]
       );
 
+      console.log(`[Game] Property purchase saved: ${tile.name} at position ${tile.position} by participant ${participant.id} in game ${gameId}`);
+
       // Get updated balance
       return await t.one(
         `SELECT cash FROM game_participants WHERE id = $1`,
@@ -260,25 +333,24 @@ router.post("/:id/tax", async (req, res) => {
       return res.status(400).json({ error: "Invalid tax amount" });
     }
 
-    // TODO: Get user_id from session when auth is implemented
-    // For now, get the first participant in this game, or create one if none exists
+    // Get user_id from session
+    const userId = (req.session as any)?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Please log in to buy properties" });
+    }
+
+    // Get participant for this user and game, or create one if none exists
     let participant = await db.oneOrNone(
-      `SELECT * FROM game_participants WHERE game_id = $1 ORDER BY joined_at LIMIT 1`,
-      [gameId]
+      `SELECT * FROM game_participants WHERE game_id = $1 AND user_id = $2`,
+      [gameId, userId]
     );
     
     if (!participant) {
-      // Create a participant with the first user
-      const firstUser = await db.oneOrNone('SELECT id FROM users LIMIT 1');
-      if (!firstUser) {
-        return res.status(400).json({ error: "No user found. Please create a user first." });
-      }
-      
       participant = await db.one(
         `INSERT INTO game_participants (game_id, user_id, cash, position, token_color)
          VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
-        [gameId, firstUser.id, 1500, 0, 'blue']
+        [gameId, userId, 1500, 0, 'blue']
       );
     }
 
@@ -337,16 +409,16 @@ router.post("/:id/card-effect", async (req, res) => {
       return res.status(400).json({ error: "Invalid card effect" });
     }
 
-    // TODO: Get user_id from session when auth is implemented
-    const firstUser = await db.oneOrNone('SELECT id FROM users LIMIT 1');
-    if (!firstUser) {
-      return res.status(400).json({ error: "No user found" });
+    // Get user_id from session
+    const userId = (req.session as any)?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Please log in to use card effects" });
     }
 
     // Get participant for this user and game
     const participant = await db.oneOrNone(
       `SELECT * FROM game_participants WHERE game_id = $1 AND user_id = $2`,
-      [gameId, firstUser.id]
+      [gameId, userId]
     );
     if (!participant) {
       return res.status(400).json({ error: "Participant not found" });
@@ -571,22 +643,23 @@ router.post("/:id/chat", async (req, res) => {
       return res.status(400).json({ error: "Message cannot be empty" });
     }
 
-    // TODO: Get user_id from session when auth is implemented
-    // For now, use the first user as placeholder
-    const firstUser = await db.oneOrNone('SELECT id FROM users LIMIT 1');
-    if (!firstUser) {
-      return res.status(400).json({ error: "No user found" });
+    // Get user_id from session
+    const userId = (req.session as any)?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Please log in to send messages" });
     }
 
     const chatMessage = await db.one(
       `INSERT INTO chat_messages (game_id, user_id, message)
        VALUES ($1, $2, $3)
        RETURNING id, message, created_at`,
-      [gameId, firstUser.id, message.trim()]
+      [gameId, userId, message.trim()]
     );
 
+    console.log(`[Game] Chat message saved: ID ${chatMessage.id} in game ${gameId} by user ${userId}`);
+
     // Get user display name
-    const user = await db.one('SELECT display_name FROM users WHERE id = $1', [firstUser.id]);
+    const user = await db.one('SELECT display_name FROM users WHERE id = $1', [userId]);
 
     res.json({
       id: chatMessage.id,
@@ -605,10 +678,16 @@ router.get("/:id/properties", async (req, res) => {
   try {
     const gameId = req.params.id;
     
-    // Get the first participant in this game
+    // Get user_id from session
+    const userId = (req.session as any)?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Please log in to view properties" });
+    }
+
+    // Get participant for this user and game
     const participant = await db.oneOrNone(
-      `SELECT * FROM game_participants WHERE game_id = $1 ORDER BY joined_at LIMIT 1`,
-      [gameId]
+      `SELECT * FROM game_participants WHERE game_id = $1 AND user_id = $2`,
+      [gameId, userId]
     );
     
     if (!participant) {

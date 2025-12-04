@@ -4,6 +4,7 @@ import express from "express";
 import morgan from "morgan";
 import createHttpError from "http-errors";
 import bodyParser from "body-parser";
+import session from "express-session";
 import { logger } from "./utils/logger";
 
 import { mainRouter } from "./routes/root";
@@ -30,6 +31,19 @@ const PORT = process.env.PORT || 3005;
 app.use(morgan("dev"));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'webopoly-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // Set to true if using HTTPS
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
 app.use(express.static(path.join("dist", "public")));
 
 //setting up our view engine allows us to create templetes that generate HTML dynamically

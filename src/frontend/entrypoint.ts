@@ -806,11 +806,11 @@ async function updateCurrentProperty(position: number) {
           (cardEl as HTMLElement).style.pointerEvents = "none";
           
           // Show notification with card details
-          showGameNotification(`${cardTitle}: ${cardDescription}`, 3000);
+          showGameNotification(`${cardTitle || 'Card'}: ${cardDescription || 'Effect applied'}`, "info");
           
           // Apply card effect after a delay so user can read the card
           setTimeout(() => {
-            applyCardEffect(cardEffect, position, cardTitle, cardDescription);
+            applyCardEffect(cardEffect, position, cardTitle || undefined, cardDescription || undefined);
           }, 3000);
         });
       });
@@ -843,11 +843,11 @@ async function updateCurrentProperty(position: number) {
           }
           
           // Show notification with card details
-          showGameNotification(`${cardTitle}: ${cardDescription}`, 3000);
+          showGameNotification(`${cardTitle || 'Card'}: ${cardDescription || 'Effect applied'}`, "info");
           
           // Apply card effect after a delay so user can read the card
           setTimeout(() => {
-            applyCardEffect(cardEffect, position, cardTitle, cardDescription);
+            applyCardEffect(cardEffect, position, cardTitle || undefined, cardDescription || undefined);
           }, 3000);
         });
       } else {
