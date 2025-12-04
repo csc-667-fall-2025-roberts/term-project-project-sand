@@ -3,9 +3,7 @@ import express from "express";
 const router = express.Router();
 
 router.get("/", (_req, res) => {
-  res.render("signin", {
-    gamesListing: ["Andre", "Daniel", "Charlie", "Nate"],
-  });
+  res.redirect("/auth/login");
 });
 
 export { router as signinRouter }; // to be used in server.ts

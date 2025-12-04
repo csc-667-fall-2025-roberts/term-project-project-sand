@@ -1,17 +1,109 @@
-<html>
-  <head>
-    <link rel="stylesheet" href="temp.css" />
-  </head>
-  <body>
-    <h1>JOIN LOBBY</h1>
-    <p>LOBBY NAME</p>
-    <ul>
-      <% for(let i = 0; i < gamesListing.length; i++) { %>
-      <li>
-        <%= i %>
-        <%= gamesListing[i] %>
-      </li>
-      <% } %>
-    </ul>
-  </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lobby - Webopoly</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-pink-50">
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 shadow-xl text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-black text-white drop-shadow-lg">WEBOPOLY</h1>
+        <div class="flex items-center gap-4">
+          <span class="text-white font-semibold">Welcome, <span class="font-bold"><%= user?.display_name || 'Player' %></span></span>
+          <a href="/auth/logout" class="bg-white/20 hover:bg-white/30 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm">Logout</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Create Game Section -->
+      <div class="lg:col-span-1">
+        <div class="card">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">Create Game</h2>
+          <form action="/lobby/create" method="POST" class="space-y-4">
+            <div>
+              <label for="game_name" class="block text-sm font-medium text-gray-700 mb-2">
+                Game Name
+              </label>
+              <input
+                type="text"
+                id="game_name"
+                name="game_name"
+                required
+                class="input-field"
+                placeholder="My Awesome Game"
+              />
+            </div>
+
+            <div>
+              <label for="max_players" class="block text-sm font-medium text-gray-700 mb-2">
+                Max Players
+              </label>
+              <select id="max_players" name="max_players" class="input-field" required>
+                <option value="2">2 Players</option>
+                <option value="3">3 Players</option>
+                <option value="4" selected>4 Players</option>
+                <option value="5">5 Players</option>
+                <option value="6">6 Players</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn-primary w-full">
+              Create Game
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- Games List Section -->
+      <div class="lg:col-span-2">
+        <div class="card">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">Available Games</h2>
+          
+          <% if (games && games.length > 0) { %>
+            <div class="space-y-4">
+              <% games.forEach(game => { %>
+                <div class="border-2 border-amber-200 rounded-lg p-5 hover:shadow-xl transition-all duration-200 bg-gradient-to-br from-white to-amber-50 hover:border-amber-400 hover:scale-[1.02]">
+                  <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                      <h3 class="text-lg font-bold text-gray-800 mb-1"><%= game.name %></h3>
+                      <p class="text-sm text-gray-700 mt-1">
+                        Code: <span class="font-mono font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded"><%= game.game_code %></span>
+                      </p>
+                      <div class="flex items-center gap-4 mt-3 text-sm">
+                        <span class="text-gray-600">Players: <span class="font-semibold text-gray-800"><%= game.current_players || 0 %>/<%= game.max_players %></span></span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold <%= game.status === 'waiting' ? 'bg-amber-200 text-amber-800 border-2 border-amber-300' : game.status === 'playing' ? 'bg-emerald-200 text-emerald-800 border-2 border-emerald-300' : 'bg-gray-200 text-gray-800 border-2 border-gray-300' %>">
+                          <%= game.status.charAt(0).toUpperCase() + game.status.slice(1) %>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="flex gap-2 ml-4">
+                      <% if (game.status === 'waiting') { %>
+                        <a href="/games/<%= game.id %>" class="btn-primary text-sm whitespace-nowrap">Join Game</a>
+                      <% } else { %>
+                        <span class="btn-secondary text-sm opacity-50 cursor-not-allowed whitespace-nowrap">In Progress</span>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <div class="text-center py-12 text-gray-500">
+              <p class="text-lg mb-2">No games available</p>
+              <p class="text-sm">Create a new game to get started!</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
 </html>

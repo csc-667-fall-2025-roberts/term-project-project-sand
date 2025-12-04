@@ -15,7 +15,7 @@ router.get("/signup", (_req, res) => {
 });
 
 router.post("/login", (_req, res) => {
-  return res.redirect("/dashboard");
+  return res.redirect("/lobby");
 });
 
 router.post("/signup", (_req, res) => {
@@ -23,7 +23,7 @@ router.post("/signup", (_req, res) => {
 });
 
 router.post("/logout", (_req, res) => {
-  return res.render("/auth/login");
+  return res.redirect("/auth/login");
 });
 
 export { router as authRouter }; // to be used in server.ts

@@ -1,16 +1,360 @@
-<html>
-  <head>
-    <link rel="stylesheet" href="temp.css" />
-  </head>
-  <body>
-    <h1>GAME ROOM PAGE!</h1>
-    <ul>
-      <% for(let i = 0; i < gamesListing.length; i++) { %>
-      <li>
-        <%= i %>
-        <%= gamesListing[i] %>
-      </li>
-      <% } %>
-    </ul>
-  </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Room - Webopoly</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+  <body class="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-pink-50">
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 shadow-xl text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-black text-white drop-shadow-lg">WEBOPOLY</h1>
+          <p class="text-sm text-amber-50 font-semibold">Game: <%= game?.name || 'Loading...' %></p>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-white font-semibold">Game Code: <span class="font-mono font-bold bg-white/20 px-2 py-1 rounded"><%= game?.game_code || 'N/A' %></span></span>
+          <a href="/lobby" class="bg-white/20 hover:bg-white/30 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm">Back to Lobby</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Left Sidebar - Player Info -->
+      <div class="lg:col-span-2 space-y-4">
+        <!-- Current Player Card -->
+        <div class="card bg-primary-50 border-2 border-primary-300">
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Your Status</h3>
+          <div class="space-y-2">
+            <div>
+              <p class="text-sm text-gray-600">Balance</p>
+              <p class="text-2xl font-bold text-primary-700">$<%= player?.cash || 1500 %></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Position</p>
+              <p id="player-position" class="text-xl font-semibold text-gray-800"><%= player?.position || 0 %></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Token</p>
+              <% const tokenColor = player?.token_color || 'blue'; %>
+              <div class="w-8 h-8 rounded-full <%= tokenColor === 'red' ? 'bg-red-500' : tokenColor === 'blue' ? 'bg-blue-500' : tokenColor === 'green' ? 'bg-green-500' : tokenColor === 'yellow' ? 'bg-yellow-500' : 'bg-gray-500' %>"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Current Spot Card -->
+        <div class="card bg-secondary-50 border-2 border-secondary-300" id="current-property-card">
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Current Spot</h3>
+          <div id="current-property-content" class="space-y-3">
+            <p class="text-sm text-gray-500">Roll the dice to see spots</p>
+          </div>
+        </div>
+
+
+        <!-- Game Actions -->
+        <div class="card">
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Actions</h3>
+          
+          <!-- Dice Display -->
+          <div id="dice-container" class="hidden mb-4">
+            <div class="flex gap-4 justify-center items-center">
+              <div id="dice-1" class="dice-face w-16 h-16 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center text-2xl font-bold shadow-md">
+                <span id="dice-1-value">?</span>
+              </div>
+              <div class="text-2xl font-bold text-gray-700">+</div>
+              <div id="dice-2" class="dice-face w-16 h-16 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center text-2xl font-bold shadow-md">
+                <span id="dice-2-value">?</span>
+              </div>
+              <div class="text-xl font-semibold text-primary-600 ml-2">
+                = <span id="dice-total">?</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="space-y-2">
+            <button class="btn-primary w-full" id="roll-dice-btn">
+              Roll Dice
+            </button>
+            <button class="btn-secondary w-full" id="end-turn-btn" disabled>
+              End Turn
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center - Game Board Mockup -->
+      <div class="lg:col-span-8">
+        <div class="card">
+          <h3 class="text-xl font-bold text-gray-800 mb-6 text-center">Game Board</h3>
+          
+          <!-- Board Mockup - This will be replaced with actual game board later -->
+          <div class="relative bg-gradient-to-br from-amber-100 via-orange-100 via-pink-100 to-purple-100 rounded-lg p-10 min-h-[900px] border-4 border-amber-400 shadow-2xl" id="game-board-container">
+            <!-- Board Grid Placeholder -->
+            <div class="grid grid-cols-11 grid-rows-11 gap-3 h-full relative">
+              <!-- Top Row -->
+              <div class="col-span-1 row-span-1 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg border-3 border-emerald-700 p-4 text-xs text-center text-white shadow-lg flex flex-col justify-center transform hover:scale-105 transition-transform">
+                <div class="font-black text-xl">GO</div>
+                <div class="text-sm mt-1 font-semibold">Collect $200</div>
+              </div>
+              <% 
+                const topRowProperties = [
+                  { name: "Market St", type: "property", price: 60 },
+                  { name: "Mission St", type: "property", price: 60 },
+                  { name: "Chance", type: "chance", price: 0 },
+                  { name: "Union Square", type: "property", price: 100 },
+                  { name: "Chinatown", type: "property", price: 100 },
+                  { name: "Community Chest", type: "community_chest", price: 0 },
+                  { name: "Fisherman's Wharf", type: "property", price: 120 },
+                  { name: "Lombard St", type: "property", price: 140 },
+                  { name: "Income Tax", type: "tax", price: 0 }
+                ];
+                topRowProperties.forEach((prop, i) => {
+                  const bgClass = prop.type === "chance" ? "bg-gradient-to-br from-yellow-400 to-amber-500" : 
+                                 prop.type === "community_chest" ? "bg-gradient-to-br from-blue-400 to-cyan-500" :
+                                 prop.type === "tax" ? "bg-gradient-to-br from-red-400 to-rose-500" : "bg-gradient-to-br from-white to-gray-50";
+                  const textClass = prop.type === "chance" || prop.type === "community_chest" || prop.type === "tax" ? "text-white font-bold" : "text-gray-800";
+              %>
+                <div class="col-span-1 row-span-1 <%= bgClass %> rounded-lg border-2 border-gray-300 p-3 text-xs text-center hover:shadow-lg hover:scale-105 transition-all cursor-pointer <%= textClass %> flex flex-col justify-center">
+                  <div class="font-semibold text-sm leading-tight"><%= prop.name %></div>
+                  <% if (prop.type === "property" && prop.price > 0) { %>
+                    <div class="text-xs mt-1 font-bold">$<%= prop.price %></div>
+                  <% } else if (prop.type === "property") { %>
+                    <div class="text-xs mt-1 opacity-75">Property</div>
+                  <% } %>
+                </div>
+              <% }); %>
+              <div class="col-span-1 row-span-1 bg-gradient-to-br from-slate-600 to-slate-800 rounded-lg border-3 border-slate-900 p-4 text-xs text-center text-white shadow-lg flex flex-col justify-center transform hover:scale-105 transition-transform">
+                <div class="font-black text-xl">JAIL</div>
+                <div class="text-sm mt-1 font-semibold">Just Visiting</div>
+              </div>
+
+              <!-- Middle Rows -->
+              <% 
+                const rightColProperties = [
+                  { name: "Golden Gate Park", type: "property", price: 140 },
+                  { name: "Chance", type: "chance", price: 0 },
+                  { name: "Alcatraz", type: "property", price: 160 },
+                  { name: "Pier 39", type: "property", price: 180 },
+                  { name: "Coit Tower", type: "property", price: 180 },
+                  { name: "Cable Car", type: "railroad", price: 200 },
+                  { name: "Twin Peaks", type: "property", price: 200 },
+                  { name: "Community Chest", type: "community_chest", price: 0 },
+                  { name: "Haight-Ashbury", type: "property", price: 220 }
+                ];
+                const leftColProperties = [
+                  { name: "SOMA", type: "property", price: 220 },
+                  { name: "Financial Dist", type: "property", price: 240 },
+                  { name: "Water Works", type: "utility", price: 150 },
+                  { name: "Embarcadero", type: "property", price: 260 },
+                  { name: "Luxury Tax", type: "tax", price: 0 },
+                  { name: "Muni", type: "railroad", price: 200 },
+                  { name: "Chance", type: "chance", price: 0 },
+                  { name: "Nob Hill", type: "property", price: 280 },
+                  { name: "Russian Hill", type: "property", price: 300 }
+                ];
+                for (let row = 0; row < 9; row++) {
+                  const rightProp = rightColProperties[row];
+                  const leftProp = leftColProperties[row];
+                  const rightBg = rightProp.type === "chance" ? "bg-gradient-to-br from-yellow-400 to-amber-500" : 
+                                 rightProp.type === "community_chest" ? "bg-gradient-to-br from-blue-400 to-cyan-500" :
+                                 rightProp.type === "railroad" ? "bg-gradient-to-br from-slate-600 to-slate-800" :
+                                 rightProp.type === "tax" ? "bg-gradient-to-br from-red-400 to-rose-500" : "bg-gradient-to-br from-white to-gray-50";
+                  const rightText = rightProp.type === "chance" || rightProp.type === "community_chest" || rightProp.type === "railroad" || rightProp.type === "tax" ? "text-white font-bold" : "text-gray-800";
+                  const leftBg = leftProp.type === "chance" ? "bg-gradient-to-br from-yellow-400 to-amber-500" : 
+                                leftProp.type === "community_chest" ? "bg-gradient-to-br from-blue-400 to-cyan-500" :
+                                leftProp.type === "railroad" ? "bg-gradient-to-br from-slate-600 to-slate-800" :
+                                leftProp.type === "utility" ? "bg-gradient-to-br from-cyan-400 to-teal-500" :
+                                leftProp.type === "tax" ? "bg-gradient-to-br from-red-400 to-rose-500" : "bg-gradient-to-br from-white to-gray-50";
+                  const leftText = leftProp.type === "chance" || leftProp.type === "community_chest" || leftProp.type === "railroad" || leftProp.type === "utility" || leftProp.type === "tax" ? "text-white font-bold" : "text-gray-800";
+              %>
+                <div class="col-span-1 row-span-1 <%= leftBg %> rounded-lg border-2 border-gray-300 p-3 text-xs text-center hover:shadow-lg hover:scale-105 transition-all cursor-pointer <%= leftText %> flex flex-col justify-center">
+                  <div class="font-semibold text-sm leading-tight"><%= leftProp.name %></div>
+                  <% if ((leftProp.type === "property" || leftProp.type === "railroad" || leftProp.type === "utility") && leftProp.price > 0) { %>
+                    <div class="text-xs mt-1 font-bold">$<%= leftProp.price %></div>
+                  <% } else if (leftProp.type === "property") { %>
+                    <div class="text-xs mt-1 opacity-75">Property</div>
+                  <% } %>
+                </div>
+                <div class="col-span-9 row-span-1 bg-gradient-to-r from-amber-50 via-orange-50 to-pink-50 rounded border-2 border-amber-200 flex items-center justify-center opacity-30">
+                </div>
+                <div class="col-span-1 row-span-1 <%= rightBg %> rounded-lg border-2 border-gray-300 p-3 text-xs text-center hover:shadow-lg hover:scale-105 transition-all cursor-pointer <%= rightText %> flex flex-col justify-center">
+                  <div class="font-semibold text-sm leading-tight"><%= rightProp.name %></div>
+                  <% if ((rightProp.type === "property" || rightProp.type === "railroad" || rightProp.type === "utility") && rightProp.price > 0) { %>
+                    <div class="text-xs mt-1 font-bold">$<%= rightProp.price %></div>
+                  <% } else if (rightProp.type === "property") { %>
+                    <div class="text-xs mt-1 opacity-75">Property</div>
+                  <% } %>
+                </div>
+              <% } %>
+
+              <!-- Bottom Row -->
+              <div class="col-span-1 row-span-1 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg border-3 border-emerald-600 p-4 text-xs text-center text-white shadow-lg flex flex-col justify-center transform hover:scale-105 transition-transform">
+                <div class="font-black text-xl">Free</div>
+                <div class="text-sm mt-1 font-semibold">Parking</div>
+              </div>
+              <% 
+                // Bottom row goes RIGHT TO LEFT (from Go To Jail to Free Parking)
+                const bottomRowProperties = [
+                  { name: "Go To Jail", type: "go_to_jail", price: 0 },
+                  { name: "Luxury Tax", type: "tax", price: 0 },
+                  { name: "Golden Gate Bridge", type: "property", price: 400 },
+                  { name: "Community Chest", type: "community_chest", price: 0 },
+                  { name: "Presidio", type: "property", price: 400 },
+                  { name: "BART", type: "railroad", price: 200 },
+                  { name: "Marina", type: "property", price: 350 },
+                  { name: "North Beach", type: "property", price: 320 },
+                  { name: "Chance", type: "chance", price: 0 },
+                  { name: "Castro", type: "property", price: 300 },
+                  { name: "Free Parking", type: "free_parking", price: 0 }
+                ];
+                bottomRowProperties.forEach((prop, i) => {
+                  const bgClass = prop.type === "chance" ? "bg-gradient-to-br from-yellow-400 to-amber-500" : 
+                                 prop.type === "community_chest" ? "bg-gradient-to-br from-blue-400 to-cyan-500" :
+                                 prop.type === "railroad" ? "bg-gradient-to-br from-slate-600 to-slate-800" :
+                                 prop.type === "go_to_jail" ? "bg-gradient-to-br from-orange-500 to-red-600" : 
+                                 prop.type === "free_parking" ? "bg-gradient-to-br from-emerald-400 to-teal-500" :
+                                 prop.type === "tax" ? "bg-gradient-to-br from-red-400 to-rose-500" : "bg-gradient-to-br from-white to-gray-50";
+                  const textClass = prop.type === "chance" || prop.type === "community_chest" || prop.type === "railroad" || prop.type === "go_to_jail" || prop.type === "free_parking" || prop.type === "tax" ? "text-white font-bold" : "text-gray-800";
+              %>
+                <div class="col-span-1 row-span-1 <%= bgClass %> rounded-lg border-2 border-gray-300 p-3 text-xs text-center hover:shadow-lg hover:scale-105 transition-all cursor-pointer <%= textClass %> flex flex-col justify-center">
+                  <div class="font-semibold text-sm leading-tight"><%= prop.name %></div>
+                  <% if ((prop.type === "property" || prop.type === "railroad") && prop.price > 0) { %>
+                    <div class="text-xs mt-1 font-bold">$<%= prop.price %></div>
+                  <% } else if (prop.type === "property") { %>
+                    <div class="text-xs mt-1 opacity-75">Property</div>
+                  <% } else if (prop.type === "go_to_jail") { %>
+                    <div class="text-xs mt-1">Go Directly</div>
+                  <% } %>
+                </div>
+              <% }); %>
+            </div>
+
+            <!-- Player Tokens Placeholder -->
+            <div class="absolute top-4 left-4 z-10">
+              <div class="flex gap-2">
+                <div class="w-6 h-6 rounded-full bg-red-500 border-2 border-white shadow"></div>
+                <div class="w-6 h-6 rounded-full bg-blue-500 border-2 border-white shadow"></div>
+                <div class="w-6 h-6 rounded-full bg-green-500 border-2 border-white shadow"></div>
+                <div class="w-6 h-6 rounded-full bg-yellow-500 border-2 border-white shadow"></div>
+              </div>
+            </div>
+            
+            <!-- Center Logo - Absolutely positioned in the exact center of the grid -->
+            <div class="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[calc(81.82%-1.5rem)] h-[calc(81.82%-1.5rem)] max-w-[450px] max-h-[450px] bg-gradient-to-br from-amber-50 via-orange-50 to-pink-50 rounded-lg border-4 border-amber-300 shadow-xl flex items-center justify-center relative overflow-hidden z-0 pointer-events-none">
+              <div class="absolute inset-0 bg-gradient-to-br from-amber-200/20 via-orange-200/20 to-pink-200/20"></div>
+              <div class="relative z-10 text-center px-4">
+                <div class="text-2xl md:text-4xl font-black bg-gradient-to-r from-amber-600 via-orange-600 to-pink-600 bg-clip-text text-transparent mb-1 drop-shadow-lg">
+                  WEBOPOLY
+                </div>
+                <div class="text-xs md:text-sm font-semibold text-amber-700 mt-1">San Francisco Edition</div>
+                <div class="mt-2 flex justify-center gap-1.5">
+                  <div class="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                  <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
+                  <div class="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Sidebar - Properties & Events -->
+      <div class="lg:col-span-2 space-y-4">
+        <!-- Game Chat -->
+        <div class="card">
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Game Chat</h3>
+          <div id="chat-messages" class="h-48 overflow-y-auto border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50 space-y-2">
+            <% if (messages && messages.length > 0) { %>
+              <% messages.reverse().forEach(msg => { %>
+                <div class="text-sm">
+                  <span class="font-semibold text-primary-700"><%= msg.display_name %>:</span>
+                  <span class="text-gray-700 ml-1"><%= msg.message %></span>
+                  <span class="text-xs text-gray-400 ml-2"><%= new Date(msg.created_at).toLocaleTimeString() %></span>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <div class="text-sm text-gray-500 text-center">No messages yet</div>
+            <% } %>
+          </div>
+          <form id="chat-form" class="flex gap-2">
+            <input
+              type="text"
+              id="chat-input"
+              placeholder="Type a message..."
+              class="input-field flex-1"
+            />
+            <button type="submit" class="btn-primary">Send</button>
+          </form>
+        </div>
+        <!-- Players -->
+        <div class="card">
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Players</h3>
+          <div class="space-y-3">
+            <% if (players && players.length > 0) { %>
+              <% players.forEach(p => { %>
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div class="flex items-center gap-2">
+                    <% const pTokenColor = p.token_color || 'gray'; %>
+                    <div class="w-6 h-6 rounded-full <%= pTokenColor === 'red' ? 'bg-red-500' : pTokenColor === 'blue' ? 'bg-blue-500' : pTokenColor === 'green' ? 'bg-green-500' : pTokenColor === 'yellow' ? 'bg-yellow-500' : 'bg-gray-500' %>"></div>
+                    <span class="text-sm font-medium"><%= p.display_name %></span>
+                  </div>
+                  <span class="text-sm text-gray-600">$<%= p.cash %></span>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <p class="text-sm text-gray-500">Waiting for players...</p>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Properties Owned -->
+        <div class="card">
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Your Properties</h3>
+          <div class="space-y-2 max-h-64 overflow-y-auto">
+            <% if (properties && properties.length > 0) { %>
+              <% properties.forEach(prop => { %>
+                <div class="p-2 bg-gray-50 rounded text-sm">
+                  <div class="font-semibold"><%= prop.name %></div>
+                  <div class="text-xs text-gray-600">$<%= prop.rent_base %></div>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <p class="text-sm text-gray-500">No properties yet</p>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- Custom Modal for Alerts and Confirmations -->
+  <div id="game-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 transform transition-all">
+      <div class="p-6">
+        <h3 id="modal-title" class="text-xl font-bold text-gray-800 mb-4"></h3>
+        <p id="modal-message" class="text-gray-700 mb-6"></p>
+        <div id="modal-buttons" class="flex gap-3 justify-end">
+          <!-- Buttons will be inserted here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Notification Toast -->
+  <div id="game-notification" class="hidden fixed top-4 right-4 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-4 max-w-sm transform transition-all">
+    <div class="flex items-start gap-3">
+      <div id="notification-icon" class="flex-shrink-0"></div>
+      <div class="flex-1">
+        <p id="notification-message" class="text-sm text-gray-800"></p>
+      </div>
+      <button id="notification-close" class="text-gray-400 hover:text-gray-600">×</button>
+    </div>
+  </div>
+
+  <script src="/js/bundle.js" defer></script>
+</body>
 </html>

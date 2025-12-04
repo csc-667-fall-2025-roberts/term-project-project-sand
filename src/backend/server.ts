@@ -3,6 +3,7 @@ import * as path from "path";
 import express from "express";
 import morgan from "morgan";
 import createHttpError from "http-errors";
+import bodyParser from "body-parser";
 import { logger } from "./utils/logger";
 
 import { mainRouter } from "./routes/root";
@@ -27,6 +28,8 @@ const app = express();
 const PORT = process.env.PORT || 3005;
 
 app.use(morgan("dev"));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(express.static(path.join("dist", "public")));
 
 //setting up our view engine allows us to create templetes that generate HTML dynamically
@@ -56,6 +59,21 @@ app.use("/settings", settingsRouter);
 // Error handling middleware for 404 - Not Found
 app.use((_req, _res, next) => {
   next(createHttpError(404));
+});
+
+// Error handling middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || 'Internal Server Error';
+  
+  logger.error(`Error ${status}: ${message}`);
+  
+  res.status(status);
+  res.render('error', {
+    status: status,
+    message: message,
+    error: process.env.NODE_ENV === 'development' ? err : {}
+  });
 });
 
 // Start the server and listen on the specified PORT
