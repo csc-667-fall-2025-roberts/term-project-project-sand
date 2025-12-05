@@ -1,6 +1,39 @@
 // Game room functionality
 const gameId = window.location.pathname.match(/\/games\/([^\/\?]+)/)?.[1];
 
+// Automatically join the game when entering the game room (if not already joined)
+if (gameId) {
+  (async () => {
+    try {
+      const response = await fetch(`/games/${gameId}/join`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // If successfully joined, reload the page to show updated player list
+          if (data.message === "Successfully joined game") {
+            console.log('[Game] Successfully joined game, reloading to show updated player list...');
+            window.location.reload();
+          }
+        }
+      } else {
+        const error = await response.json();
+        // If already joined, that's fine - don't show error
+        if (error.error && !error.error.includes("already")) {
+          console.error('[Game] Error joining game:', error.error);
+        }
+      }
+    } catch (error) {
+      console.error('[Game] Error joining game:', error);
+    }
+  })();
+}
+
 // Custom Alert and Confirm functions
 function showGameAlert(message: string, title: string = "Notification"): Promise<void> {
   return new Promise((resolve) => {

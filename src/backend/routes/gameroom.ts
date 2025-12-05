@@ -156,13 +156,18 @@ router.post("/:id/join", async (req, res) => {
       return res.status(400).json({ error: "Game is full" });
     }
 
+    // Assign token color based on number of existing participants
+    const tokenColors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+    const existingCount = parseInt(currentPlayers.count);
+    const tokenColor = tokenColors[existingCount % tokenColors.length];
+
     // Create participant
-    const       participant = await db.one(
-        `INSERT INTO game_participants (game_id, user_id, cash, position, token_color)
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING *`,
-        [gameId, userId, 1500, 0, 'blue']
-      );
+    const participant = await db.one(
+      `INSERT INTO game_participants (game_id, user_id, cash, position, token_color)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [gameId, userId, 1500, 0, tokenColor]
+    );
 
       console.log(`[Game] Participant created: User ${userId} joined game ${gameId} with participant ID ${participant.id}`);
 

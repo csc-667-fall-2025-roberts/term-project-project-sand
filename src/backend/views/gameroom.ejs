@@ -300,8 +300,18 @@
               <% players.forEach(p => { %>
                 <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div class="flex items-center gap-2">
-                    <% const pTokenColor = p.token_color || 'gray'; %>
-                    <div class="w-6 h-6 rounded-full <%= pTokenColor === 'red' ? 'bg-red-500' : pTokenColor === 'blue' ? 'bg-blue-500' : pTokenColor === 'green' ? 'bg-green-500' : pTokenColor === 'yellow' ? 'bg-yellow-500' : 'bg-gray-500' %>"></div>
+                    <% 
+                      const pTokenColor = p.token_color || 'gray';
+                      const tokenColorClass = 
+                        pTokenColor === 'red' ? 'bg-red-500' :
+                        pTokenColor === 'blue' ? 'bg-blue-500' :
+                        pTokenColor === 'green' ? 'bg-green-500' :
+                        pTokenColor === 'yellow' ? 'bg-yellow-500' :
+                        pTokenColor === 'purple' ? 'bg-purple-500' :
+                        pTokenColor === 'orange' ? 'bg-orange-500' :
+                        'bg-gray-500';
+                    %>
+                    <div class="w-6 h-6 rounded-full <%= tokenColorClass %> border-2 border-white shadow"></div>
                     <span class="text-sm font-medium"><%= p.display_name %></span>
                   </div>
                   <span class="text-sm text-gray-600">$<%= p.cash %></span>
