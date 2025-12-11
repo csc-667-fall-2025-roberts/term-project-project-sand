@@ -1,0 +1,19 @@
+services:
+  backend:
+    extends:
+      file: ./backend/compose.yaml
+      service: backend
+  frontend:
+    extends:
+      file: ./frontend/compose.yaml
+      service: frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_ORIGIN: http://localhost:3000
+    depends_on:
+      - backend
+  postgres:
+    extends:
+      file: ./backend/compose.yaml
+      service: postgres

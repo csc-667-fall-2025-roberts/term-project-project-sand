@@ -18,7 +18,7 @@
     "lint": "eslint",
     "migrate:create": "node-pg-migrate create -js ts --",
     "migrate:down": "node-pg-migrate down",
-    "migrate:up": "tsx node_modules/node-pg-migrate/bin/node-pg-migrate up",
+    "migrate:up": "node-pg-migrate up",
     "start": "node dist/backend/server.js"
   },
   "keywords": [],
