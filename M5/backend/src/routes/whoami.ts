@@ -1,15 +1,26 @@
-import type { Request, Response } from "express";
+import type { Response } from "express";
+import type {
+  AuthenticatedRequest,
+  AuthenticatedUser,
+} from "../middleware/authenticate.js";
 
-interface User {
-  name: string;
-  email: string;
-  age: number;
+interface WhoAmIResponse {
+  user: AuthenticatedUser;
 }
 
-export async function whoami(_req: Request, res: Response<User>) {
+interface ErrorResponse {
+  error: string;
+}
+
+export async function whoami(
+  req: AuthenticatedRequest,
+  res: Response<WhoAmIResponse | ErrorResponse>,
+) {
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   return res.json({
-    name: "Daniel Mulvad",
-    email: "daniel@example.com",
-    age: 25,
+    user: req.user,
   });
 }

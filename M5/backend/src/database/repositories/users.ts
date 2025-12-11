@@ -1,22 +1,52 @@
 import type { IDatabase } from "pg-promise";
 import type { IClient } from "pg-promise/typescript/pg-subset.js";
+import { pgPool } from "../index.js";
 
-interface User {
-  email: string;
+export interface UserRecord {
+  id: string;
   display_name: string;
-  password_hash: string;
+  email: string;
+  created_at: Date;
+  updated_at: Date;
 }
 
-export class UsersRepository {
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+class UsersRepository {
   constructor(
-    private readonly pgPool: IDatabase<Record<string, never>, IClient>,
+    private readonly db: IDatabase<Record<string, unknown>, IClient>,
   ) {}
 
-  async createUser(user: User): Promise<User> {
-    const { email, display_name, password_hash } = user;
-    const query = `INSERT INTO users (email, display_name, password_hash) VALUES ($1, $2, $3) RETURNING *`;
-    const values = [email, display_name, password_hash];
-    const result = await this.pgPool.query(query, values);
-    return result.rows[0];
+  async create(displayName: string, email: string): Promise<UserRecord> {
+    const normalizedEmail = normalizeEmail(email);
+    const query = `
+      INSERT INTO users (display_name, email)
+      VALUES ($1, $2)
+      RETURNING id, display_name, email, created_at, updated_at
+    `;
+    return this.db.one(query, [displayName, normalizedEmail]);
+  }
+
+  async findById(id: string): Promise<UserRecord | null> {
+    const query = `
+      SELECT id, display_name, email, created_at, updated_at
+      FROM users
+      WHERE id = $1
+    `;
+    return this.db.oneOrNone(query, [id]);
+  }
+
+  async findByEmail(email: string): Promise<UserRecord | null> {
+    const normalizedEmail = normalizeEmail(email);
+    const query = `
+      SELECT id, display_name, email, created_at, updated_at
+      FROM users
+      WHERE email = $1
+    `;
+    return this.db.oneOrNone(query, [normalizedEmail]);
   }
 }
+
+export const usersRepository = new UsersRepository(pgPool);

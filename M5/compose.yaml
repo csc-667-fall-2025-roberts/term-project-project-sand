@@ -3,6 +3,8 @@ services:
     extends:
       file: ./backend/compose.yaml
       service: backend
+    env_file:
+      - ./backend/.env
   frontend:
     extends:
       file: ./frontend/compose.yaml
@@ -12,7 +14,8 @@ services:
       args:
         VITE_API_ORIGIN: http://localhost:3000
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
   postgres:
     extends:
       file: ./backend/compose.yaml
