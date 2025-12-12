@@ -5,6 +5,15 @@ import {
   setFormError,
   toggleBusy,
 } from "./utils/form";
+import UserStorage from "./storage/user";
+
+const userStorage = new UserStorage(null, [
+  (user) => {
+    if (user) {
+      redirectToApp();
+    }
+  },
+]);
 
 function redirectToApp(): void {
   window.location.href = "/";
@@ -30,8 +39,8 @@ function wireLoginForm(): void {
         throw new Error("All fields are required");
       }
 
-      await client.login({ email, password });
-      redirectToApp();
+      const user = await client.login({ email, password });
+      userStorage.set(user);
     } catch (error) {
       console.error(error);
       const message =

@@ -3,32 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="/css/tailwind.css" />
-    <script type="module" src="/js/authenticated.js"></script>
+    <link rel="modulepreload" href="/js/components/layout-header.js" />
+    <link rel="modulepreload" href="/js/components/button.js" />
+    <script type="module" src="/js/components/layout-header.js"></script>
   </head>
   <body>
     <main>
-      <header>
-        <h1>Dashboard</h1>
-        <p>Authenticated area</p>
-      </header>
-
+      <layout-header></layout-header>
       <section>
-        <h2>Profile</h2>
-        <p id="auth-status" role="status"></p>
-        <dl>
-          <div>
-            <dt>Name</dt>
-            <dd id="user-name">-</dd>
-          </div>
-          <div>
-            <dt>Email</dt>
-            <dd id="user-email">-</dd>
-          </div>
-        </dl>
-        <div>
-          <button id="refetch">Refresh profile</button>
-          <button id="logout">Logout</button>
-        </div>
+        <h2>Dashboard</h2>
+        <p>Welcome to the dashboard</p>
       </section>
     </main>
   </body>

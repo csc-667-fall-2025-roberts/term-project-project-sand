@@ -2,12 +2,10 @@ class Observable<T> {
   private value: T;
   private subscribers: ((newValue: T) => void)[] = [];
 
-  constructor(value: T) {
-    this.value = value;
-  }
-
-  private notify(): void {
-    this.subscribers.forEach((subscriber) => subscriber(this.value));
+  constructor(initialValue: T, subscribers: ((newValue: T) => void)[] = []) {
+    this.value = initialValue;
+    this.subscribers = subscribers;
+    this.notify();
   }
 
   get(): T {
@@ -26,6 +24,10 @@ class Observable<T> {
         (subscriber) => subscriber !== callback,
       );
     };
+  }
+
+  private notify(): void {
+    this.subscribers.forEach((subscriber) => subscriber(this.value));
   }
 }
 
