@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="/css/tailwind.css" />
     <script type="module" src="/js/login.js"></script>
+    <script type="module" src="/js/components/button.js"></script>
+    <script type="module" src="/js/components/field.js"></script>
+    <script type="module" src="/js/components/auth-shell.js"></script>
+    <script type="module" src="/js/components/auth-header.js"></script>
+    <script type="module" src="/js/components/auth-footer-link.js"></script>
   </head>
   <body>
     <auth-shell>
@@ -28,7 +33,9 @@
           autocomplete="current-password"
           required
         ></component-field>
-        <component-button>Sign In</component-button>
+        <component-button class="w-full" type="submit">
+          Sign In
+        </component-button>
       </form>
       <auth-footer-link
         slot="footer"
@@ -37,10 +44,5 @@
         text="Sign up"
       ></auth-footer-link>
     </auth-shell>
-    <script type="module" src="/js/components/button.js"></script>
-    <script type="module" src="/js/components/field.js"></script>
-    <script type="module" src="/js/components/auth-shell.js"></script>
-    <script type="module" src="/js/components/auth-header.js"></script>
-    <script type="module" src="/js/components/auth-footer-link.js"></script>
   </body>
 </html>

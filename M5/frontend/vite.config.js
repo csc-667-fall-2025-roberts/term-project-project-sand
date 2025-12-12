@@ -2,7 +2,6 @@ import tailwindcss from "@tailwindcss/vite";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
-import dts from "vite-plugin-dts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootPath = resolve(__dirname, "src");
@@ -19,7 +18,7 @@ export default defineConfig({
     },
   },
   envDir: __dirname,
-  plugins: [dts(), tailwindcss()],
+  plugins: [tailwindcss()],
   publicDir: resolve(__dirname, "public"),
   root: rootPath,
 });
