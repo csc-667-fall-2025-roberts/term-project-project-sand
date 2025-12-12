@@ -4,23 +4,17 @@ import type {
   AuthenticatedUser,
 } from "../middleware/authenticate.js";
 
-interface WhoAmIResponse {
-  user: AuthenticatedUser;
-}
-
 interface ErrorResponse {
   error: string;
 }
 
 export async function whoami(
   req: AuthenticatedRequest,
-  res: Response<WhoAmIResponse | ErrorResponse>,
+  res: Response<AuthenticatedUser | ErrorResponse>,
 ) {
   if (!req.user) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  return res.json({
-    user: req.user,
-  });
+  return res.json(req.user);
 }

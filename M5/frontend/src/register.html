@@ -3,15 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="/css/tailwind.css" />
-    <script type="module" src="/js/login.js"></script>
+    <script type="module" src="/js/register.js"></script>
   </head>
   <body>
     <auth-shell>
-      <auth-header
-        slot="header"
-        subtitle="Sign in to your account"
-      ></auth-header>
-      <form class="flex flex-col gap-4" slot="body" id="login-form">
+      <auth-header slot="header" subtitle="Create your account"></auth-header>
+      <form class="flex flex-col gap-4" slot="body" id="register-form">
+        <component-field
+          label="Display name"
+          type="text"
+          name="displayName"
+          placeholder="Choose a display name"
+          autocomplete="name"
+          required
+        ></component-field>
         <component-field
           label="Email"
           type="email"
@@ -24,19 +29,28 @@
           label="Password"
           type="password"
           name="password"
-          placeholder="Enter your password"
-          autocomplete="current-password"
+          placeholder="Create a password (min. 8 characters)"
+          autocomplete="new-password"
           required
         ></component-field>
-        <component-button>Sign In</component-button>
+        <component-field
+          label="Confirm Password"
+          type="password"
+          name="confirmPassword"
+          placeholder="Confirm your password"
+          autocomplete="new-password"
+          required
+        ></component-field>
+        <component-button>Create Account</component-button>
       </form>
       <auth-footer-link
         slot="footer"
-        prompt="Don't have an account?"
-        href="/register"
-        text="Sign up"
+        prompt="Already have an account?"
+        href="/login"
+        text="Sign in"
       ></auth-footer-link>
     </auth-shell>
+
     <script type="module" src="/js/components/button.js"></script>
     <script type="module" src="/js/components/field.js"></script>
     <script type="module" src="/js/components/auth-shell.js"></script>

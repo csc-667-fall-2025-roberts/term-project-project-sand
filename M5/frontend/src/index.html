@@ -2,11 +2,34 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="/css/index.css" />
+    <link rel="stylesheet" href="/css/tailwind.css" />
   </head>
   <body>
-    <h1>Hello Vite</h1>
-    <button id="refetch">Refetch</button>
+    <main>
+      <header>
+        <h1>Dashboard</h1>
+        <p>Authenticated area</p>
+      </header>
+
+      <section>
+        <h2>Profile</h2>
+        <p id="auth-status" role="status"></p>
+        <dl>
+          <div>
+            <dt>Name</dt>
+            <dd id="user-name">-</dd>
+          </div>
+          <div>
+            <dt>Email</dt>
+            <dd id="user-email">-</dd>
+          </div>
+        </dl>
+        <div>
+          <button id="refetch">Refresh profile</button>
+          <button id="logout">Logout</button>
+        </div>
+      </section>
+    </main>
     <script type="module" src="/js/authenticated.js"></script>
   </body>
 </html>
