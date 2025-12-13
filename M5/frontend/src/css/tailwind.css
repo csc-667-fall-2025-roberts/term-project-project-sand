@@ -1,5 +1,5 @@
 @import "tailwindcss";
 
 body {
-  @apply bg-linear-to-br from-amber-50 via-orange-50 to-pink-50 min-h-screen;
+  @apply min-h-screen bg-linear-to-br from-amber-50 via-orange-50 to-pink-50;
 }

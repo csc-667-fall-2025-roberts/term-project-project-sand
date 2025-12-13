@@ -5,6 +5,8 @@ import logger from "./logger.js";
 import { requestLogger } from "./middleware/requestLogger.js";
 import { router } from "./routes/index.js";
 
+logger.info("config", config);
+
 const app = express();
 
 app.use(

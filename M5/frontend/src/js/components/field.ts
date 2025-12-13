@@ -21,7 +21,7 @@ class Field extends HTMLElement {
 
     this.innerHTML = `
     <div class="flex flex-col gap-2">
-      <label for="${id}" class="block text-sm font-medium text-gray-700">${label}</label>
+      ${label ? `<label for="${id}" class="block text-sm font-medium text-gray-700">${label}</label>` : ""}
       <input
         type="${type}"
         id="${id}"

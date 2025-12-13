@@ -2,10 +2,9 @@ services:
   backend:
     build:
       context: .
-    env_file:
-      - .env
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/webopoly}
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/webopoly
+      JWT_SECRET: secret
     ports:
       - 3000:3000
     depends_on:
