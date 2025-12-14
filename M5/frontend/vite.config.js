@@ -14,6 +14,8 @@ export default defineConfig({
       input: {
         index: resolve(rootPath, "index.html"),
         login: resolve(rootPath, "login.html"),
+        register: resolve(rootPath, "register.html"),
+        game: resolve(rootPath, "game.html"),
       },
     },
   },

@@ -46,7 +46,7 @@ class LayoutHeader extends HTMLElement {
             </h1>
             <di class="flex items-center gap-4">
               <span id="user-welcome" class="${userWelcomeClasses.join(" ")}">Welcome, <span id="user-name" class="font-bold">${userName}</span></span>
-              <component-button id="logout" label="Logout" size="sm" variant="secondary"></component-button>
+              <component-button id="logout" label="Logout" size="sm" variant="ghost"></component-button>
             </div>
           </div>
         </header>

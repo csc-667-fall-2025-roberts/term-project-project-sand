@@ -4,9 +4,12 @@ services:
       context: .
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/webopoly
-      JWT_SECRET: secret
-    ports:
-      - 3000:3000
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      COOKIE_SECURE: "true"
+      CORS_ORIGINS: https://${PUBLIC_HOST:-localhost}
     depends_on:
       postgres:
         condition: service_healthy

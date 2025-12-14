@@ -5,8 +5,12 @@ import { whoami } from "./whoami.js";
 import { refresh, logout } from "./refresh.js";
 import { health } from "./health.js";
 import { authenticate } from "../middleware/authenticate.js";
+import { gamesRouter } from "./games.js";
+import { chatRouter } from "./chat.js";
 
-const privateRouter = Router().get("/whoami", whoami);
+const privateRouter = Router()
+  .get("/whoami", whoami)
+  .use(gamesRouter, chatRouter);
 const publicRouter = Router()
   .get("/health", health)
   .post("/register", register)

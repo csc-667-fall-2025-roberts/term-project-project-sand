@@ -14,6 +14,10 @@ export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+export function normalizeDisplayName(displayName: string): string {
+  return displayName.trim().replace(/\s+/g, " "); // Replace multiple spaces with a single space
+}
+
 class UsersRepository {
   constructor(
     private readonly db: IDatabase<Record<string, unknown>, IClient>,
@@ -21,12 +25,13 @@ class UsersRepository {
 
   async create(displayName: string, email: string): Promise<UserRecord> {
     const normalizedEmail = normalizeEmail(email);
+    const normalizedDisplayName = normalizeDisplayName(displayName);
     const query = `
       INSERT INTO users (display_name, email)
       VALUES ($1, $2)
       RETURNING id, display_name, email, created_at, updated_at
     `;
-    return this.db.one(query, [displayName, normalizedEmail]);
+    return this.db.one(query, [normalizedDisplayName, normalizedEmail]);
   }
 
   async findById(id: string): Promise<UserRecord | null> {
@@ -46,6 +51,16 @@ class UsersRepository {
       WHERE email = $1
     `;
     return this.db.oneOrNone(query, [normalizedEmail]);
+  }
+
+  async findByDisplayName(displayName: string): Promise<UserRecord | null> {
+    const normalizedDisplayName = normalizeDisplayName(displayName);
+    const query = `
+      SELECT id, display_name, email, created_at, updated_at
+      FROM users
+      WHERE lower(display_name) = lower($1)
+    `;
+    return this.db.oneOrNone(query, [normalizedDisplayName]);
   }
 }
 

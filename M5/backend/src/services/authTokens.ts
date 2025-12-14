@@ -14,7 +14,7 @@ const accessTokenOptions: SignOptions = {
 const refreshCookieOptions = {
   httpOnly: true,
   sameSite: "strict" as const,
-  secure: config.isProduction,
+  secure: config.auth.cookieSecure,
   path: "/api",
 };
 
