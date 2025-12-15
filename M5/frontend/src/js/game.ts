@@ -86,6 +86,8 @@ interface ChatMessage {
 const userStorage = new UserStorage(null);
 let lastHighlightedMoveKey: string | null = null;
 let clearMoveHighlightTimer: number | null = null;
+let lastHighlightedTransactionKey: string | null = null;
+let clearTransactionHighlightTimer: number | null = null;
 
 function queryRequired<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);
@@ -480,13 +482,32 @@ function renderTransactions(state: GameState): void {
     state.players.map((p) => [p.id, p.token_color] as const),
   );
 
-  const txs = [...(state.recent_transactions ?? [])];
+  const txs = [...(state.recent_transactions ?? [])].sort(
+    (a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
   if (txs.length === 0) {
     const empty = document.createElement("div");
     empty.className = "text-xs text-gray-500";
     empty.textContent = "No transactions yet.";
     container.appendChild(empty);
     return;
+  }
+
+  const latest = txs.length > 0 ? txs[0] : null;
+  const latestKey = latest ? latest.id : null;
+  if (latestKey && latestKey !== lastHighlightedTransactionKey) {
+    lastHighlightedTransactionKey = latestKey;
+    if (clearTransactionHighlightTimer != null) {
+      window.clearTimeout(clearTransactionHighlightTimer);
+    }
+    clearTransactionHighlightTimer = window.setTimeout(() => {
+      const el = document.getElementById(`tx-${latestKey}`);
+      if (el) {
+        el.classList.remove("bg-amber-50", "ring-1", "ring-amber-200");
+      }
+      clearTransactionHighlightTimer = null;
+    }, 3000);
   }
 
   const activeCount = state.players.filter((p) => !p.is_bankrupt).length;
@@ -508,7 +529,13 @@ function renderTransactions(state: GameState): void {
     const prefix = move ? `R${round ?? 0} • #${move} • ` : "";
 
     const row = document.createElement("div");
-    row.className = "text-xs text-gray-700";
+    row.id = `tx-${tx.id}`;
+    const shouldHighlight = Boolean(
+      tx.id && tx.id === lastHighlightedTransactionKey,
+    );
+    row.className = clsx("rounded-md text-xs text-gray-700", {
+      "bg-amber-50 ring-1 ring-amber-200": shouldHighlight,
+    });
     const fromColor = colorForToken(
       tx.from_participant_id
         ? (tokenByParticipant.get(tx.from_participant_id) ?? null)
