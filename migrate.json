@@ -1,6 +1,0 @@
-{
-  "databaseUrl": "env:DATABASE_URL",
-  "dir": "migrations",
-  "migrationFileLanguage": "ts"
-}
-

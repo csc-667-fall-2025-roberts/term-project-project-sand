@@ -1,0 +1,9 @@
+services:
+  frontend:
+    build:
+      context: .
+      args:
+        VITE_API_ORIGIN: https://${PUBLIC_HOST:-localhost}
+    environment:
+      NODE_ENV: production
+      VITE_API_ORIGIN: https://${PUBLIC_HOST:-localhost}

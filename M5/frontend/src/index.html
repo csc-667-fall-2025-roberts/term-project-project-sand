@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <link rel="stylesheet" href="/css/tailwind.css" />
+    <script type="module" src="/js/index.js"></script>
+    <script type="module" src="/js/components/layout-header.js"></script>
+    <script type="module" src="/js/components/button.js"></script>
+    <script type="module" src="/js/components/field.js"></script>
+    <script type="module" src="/js/components/card.js"></script>
+    <script type="module" src="/js/components/select.js"></script>
+  </head>
+  <body>
+    <layout-header></layout-header>
+    <main class="container mx-auto grid grid-cols-12 gap-4 p-2 py-4 sm:p-4">
+      <component-card class="col-span-full">
+        <div class="flex flex-col gap-4">
+          <div class="text-xl font-bold">Dashboard Chat</div>
+          <div
+            id="dashboardChatMessages"
+            class="h-48 min-h-48 overflow-y-scroll rounded-lg border border-gray-200 p-2"
+          ></div>
+          <form
+            id="dashboardChatForm"
+            class="grid grid-cols-12 items-center gap-2"
+          >
+            <component-field
+              class="col-span-full sm:col-span-10"
+              type="text"
+              name="dashboardMessage"
+              placeholder="Message"
+            ></component-field>
+            <component-button
+              id="sendDashboardChat"
+              class="col-span-full w-full sm:col-span-2"
+              type="submit"
+              >Send</component-button
+            >
+          </form>
+        </div>
+      </component-card>
+      <component-card class="col-span-full md:col-span-4">
+        <div class="flex flex-col gap-4">
+          <div class="text-xl font-bold">Create Game</div>
+          <component-field
+            label="Game Name"
+            type="text"
+            name="gameName"
+            placeholder="Enter game name"
+          ></component-field>
+          <component-select
+            id="maxPlayersSelect"
+            label="Max players"
+            name="maxPlayers"
+            placeholder="Select max players"
+          ></component-select>
+          <component-select
+            id="createTokenColorSelect"
+            label="Token color"
+            name="createTokenColor"
+            placeholder="Select token color"
+          ></component-select>
+          <component-field
+            label="Starting balance"
+            type="number"
+            name="startingBalance"
+            placeholder="1500"
+          ></component-field>
+          <component-button id="createGame" class="w-full" type="button"
+            >Create Game</component-button
+          >
+        </div>
+      </component-card>
+      <component-card class="col-span-full md:col-span-8">
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <div class="text-xl font-bold">Games</div>
+            <component-button
+              id="refreshGames"
+              size="sm"
+              type="button"
+              variant="secondary"
+              >Refresh</component-button
+            >
+          </div>
+          <div class="grid grid-cols-12 gap-2">
+            <div class="col-span-full md:col-span-6">
+              <div class="text-sm font-semibold text-gray-700">
+                Join by code
+              </div>
+              <div class="mt-2 flex flex-col gap-2">
+                <component-field
+                  label="Game code"
+                  type="text"
+                  name="joinGameCode"
+                  placeholder="ABC123"
+                ></component-field>
+                <component-select
+                  id="joinTokenColorSelect"
+                  label="Token color"
+                  name="joinTokenColor"
+                  placeholder="Select token color"
+                ></component-select>
+                <component-button id="joinByCode" type="button" class="w-full"
+                  >Join Game</component-button
+                >
+              </div>
+            </div>
+            <div class="col-span-full md:col-span-6">
+              <div class="text-sm font-semibold text-gray-700">Your games</div>
+              <div id="myGamesList" class="mt-2 flex flex-col gap-2"></div>
+              <div class="mt-4 text-sm font-semibold text-gray-700">
+                Other games
+              </div>
+              <div id="otherGamesList" class="mt-2 flex flex-col gap-2"></div>
+            </div>
+          </div>
+        </div>
+      </component-card>
+    </main>
+  </body>
+</html>

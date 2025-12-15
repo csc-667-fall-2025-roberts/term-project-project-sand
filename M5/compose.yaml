@@ -1,0 +1,38 @@
+services:
+  proxy:
+    build:
+      context: ./nginx
+    environment:
+      SERVER_NAME: ${PUBLIC_HOST:-localhost}
+    volumes:
+      - ./nginx/certs:/etc/nginx/certs
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+
+  backend:
+    extends:
+      file: ./backend/compose.yaml
+      service: backend
+  frontend:
+    extends:
+      file: ./frontend/compose.yaml
+      service: frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_ORIGIN: https://${PUBLIC_HOST:-localhost}
+    environment:
+      VITE_API_ORIGIN: https://${PUBLIC_HOST:-localhost}
+    depends_on:
+      backend:
+        condition: service_healthy
+  postgres:
+    extends:
+      file: ./backend/compose.yaml
+      service: postgres
