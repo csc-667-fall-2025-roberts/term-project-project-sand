@@ -1,6 +1,5 @@
-import type { IDatabase } from "pg-promise";
-import type { IClient } from "pg-promise/typescript/pg-subset.js";
 import { pgPool } from "../index.js";
+import type { DbClient } from "../dbClient.js";
 
 export interface UserRecord {
   id: string;
@@ -18,10 +17,8 @@ export function normalizeDisplayName(displayName: string): string {
   return displayName.trim().replace(/\s+/g, " "); // Replace multiple spaces with a single space
 }
 
-class UsersRepository {
-  constructor(
-    private readonly db: IDatabase<Record<string, unknown>, IClient>,
-  ) {}
+export class UsersRepository {
+  constructor(private readonly db: DbClient) {}
 
   async create(displayName: string, email: string): Promise<UserRecord> {
     const normalizedEmail = normalizeEmail(email);
@@ -65,3 +62,7 @@ class UsersRepository {
 }
 
 export const usersRepository = new UsersRepository(pgPool);
+
+export function createUsersRepository(db: DbClient): UsersRepository {
+  return new UsersRepository(db);
+}

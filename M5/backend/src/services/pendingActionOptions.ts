@@ -1,4 +1,6 @@
 import type { DbClient } from "../database/dbClient.js";
+import { createGameParticipantsRepository } from "../database/repositories/gameParticipants.js";
+import { createOwnershipsRepository } from "../database/repositories/ownerships.js";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -20,15 +22,12 @@ async function canDeclareBankruptcy(
   db: DbClient,
   params: { gameId: string; participantId: string },
 ): Promise<boolean> {
-  const row = await db.one<{ count: number }>(
-    `
-      SELECT COUNT(*)::int AS count
-      FROM ownerships
-      WHERE game_id = $1 AND participant_id = $2
-    `,
-    [params.gameId, params.participantId],
+  const ownershipsRepo = createOwnershipsRepository(db);
+  const count = await ownershipsRepo.countByParticipant(
+    params.gameId,
+    params.participantId,
   );
-  return row.count === 0;
+  return count === 0;
 }
 
 export type PendingActionType = "buy_property" | "pay_rent" | "pay_bank_debt";
@@ -82,18 +81,36 @@ export async function buildOptionsPayloadFromPendingAction(
   if (type === "pay_rent") {
     const tileId = readString(payload, "tile_id") ?? "";
     const amount = readNumber(payload, "amount");
+    const options: Record<string, unknown>[] = [
+      {
+        action: "pay_rent",
+        property_id: tileId,
+        amount,
+        pending_action_id: params.pendingAction.id,
+      },
+    ];
+
+    // If you can't pay rent and have no properties to sell, allow bankruptcy to unblock the game.
+    if (amount != null && amount > 0) {
+      const participantsRepo = createGameParticipantsRepository(db);
+      const cash =
+        (await participantsRepo.findCashByIdAndGame(
+          params.participantId,
+          params.gameId,
+        )) ?? 0;
+      if (cash < amount && (await canDeclareBankruptcy(db, params))) {
+        options.push({
+          action: "declare_bankruptcy",
+          pending_action_id: params.pendingAction.id,
+        });
+      }
+    }
+
     return {
       game_id: params.gameId,
       player_id: params.participantId,
       context,
-      options: [
-        {
-          action: "pay_rent",
-          property_id: tileId,
-          amount,
-          pending_action_id: params.pendingAction.id,
-        },
-      ],
+      options,
     };
   }
 

@@ -1,6 +1,5 @@
-import type { IDatabase } from "pg-promise";
-import type { IClient } from "pg-promise/typescript/pg-subset.js";
 import { pgPool } from "../index.js";
+import type { DbClient } from "../dbClient.js";
 
 export interface TransactionRecord {
   id: string;
@@ -14,10 +13,45 @@ export interface TransactionRecord {
   created_at: Date;
 }
 
-class TransactionsRepository {
-  constructor(
-    private readonly db: IDatabase<Record<string, unknown>, IClient>,
-  ) {}
+export class TransactionsRepository {
+  constructor(private readonly db: DbClient) {}
+
+  async listRecentByGameWithTurnNumber(
+    gameId: string,
+    limit = 100,
+  ): Promise<
+    {
+      id: string;
+      created_at: string | Date;
+      turn_id: string | null;
+      turn_number: number | null;
+      from_participant_id: string | null;
+      to_participant_id: string | null;
+      amount: number;
+      transaction_type: string;
+      description: string | null;
+    }[]
+  > {
+    const safeLimit = Math.max(1, Math.min(200, limit));
+    const query = `
+      SELECT
+        tx.id,
+        tx.created_at,
+        tx.turn_id,
+        t.turn_number,
+        tx.from_participant_id,
+        tx.to_participant_id,
+        tx.amount,
+        tx.transaction_type,
+        tx.description
+      FROM transactions tx
+      LEFT JOIN turns t ON t.id = tx.turn_id
+      WHERE tx.game_id = $1
+      ORDER BY tx.created_at DESC
+      LIMIT $2
+    `;
+    return this.db.manyOrNone(query, [gameId, safeLimit]);
+  }
 
   async create(params: {
     gameId: string;
@@ -64,3 +98,9 @@ class TransactionsRepository {
 }
 
 export const transactionsRepository = new TransactionsRepository(pgPool);
+
+export function createTransactionsRepository(
+  db: DbClient,
+): TransactionsRepository {
+  return new TransactionsRepository(db);
+}

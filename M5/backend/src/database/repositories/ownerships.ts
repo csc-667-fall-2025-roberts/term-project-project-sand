@@ -1,6 +1,5 @@
-import type { IDatabase } from "pg-promise";
-import type { IClient } from "pg-promise/typescript/pg-subset.js";
 import { pgPool } from "../index.js";
+import type { DbClient } from "../dbClient.js";
 
 export interface OwnershipRecord {
   id: string;
@@ -14,10 +13,62 @@ export interface OwnershipRecord {
   updated_at: Date;
 }
 
-class OwnershipsRepository {
-  constructor(
-    private readonly db: IDatabase<Record<string, unknown>, IClient>,
-  ) {}
+export class OwnershipsRepository {
+  constructor(private readonly db: DbClient) {}
+
+  async deleteById(id: string): Promise<void> {
+    await this.db.none("DELETE FROM ownerships WHERE id = $1", [id]);
+  }
+
+  async findByGameAndTileForUpdate(
+    gameId: string,
+    tileId: string,
+  ): Promise<OwnershipRecord | null> {
+    const query = `
+      SELECT
+        id,
+        game_id,
+        tile_id,
+        participant_id,
+        houses,
+        hotels,
+        is_mortgaged,
+        created_at,
+        updated_at
+      FROM ownerships
+      WHERE game_id = $1 AND tile_id = $2
+      FOR UPDATE
+    `;
+    return this.db.oneOrNone(query, [gameId, tileId]);
+  }
+
+  async countByParticipant(
+    gameId: string,
+    participantId: string,
+  ): Promise<number> {
+    const query = `
+      SELECT COUNT(*)::int AS count
+      FROM ownerships
+      WHERE game_id = $1 AND participant_id = $2
+    `;
+    const row = await this.db.one<{ count: number }>(query, [
+      gameId,
+      participantId,
+    ]);
+    return row.count;
+  }
+
+  async deleteByParticipant(
+    gameId: string,
+    participantId: string,
+  ): Promise<number> {
+    const query = `
+      DELETE FROM ownerships
+      WHERE game_id = $1 AND participant_id = $2
+    `;
+    const result = await this.db.result(query, [gameId, participantId]);
+    return result.rowCount;
+  }
 
   async create(params: {
     gameId: string;
@@ -70,3 +121,7 @@ class OwnershipsRepository {
 }
 
 export const ownershipsRepository = new OwnershipsRepository(pgPool);
+
+export function createOwnershipsRepository(db: DbClient): OwnershipsRepository {
+  return new OwnershipsRepository(db);
+}

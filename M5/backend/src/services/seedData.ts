@@ -9,20 +9,14 @@ function requiredPositions(): number[] {
 }
 
 export async function ensureSfBoardSeeded(db: DbClient): Promise<void> {
-  const existingCountRow = await db.one<{ count: number }>(
-    "SELECT COUNT(*)::int AS count FROM tiles",
-  );
-  const count = existingCountRow.count;
+  const tilesRepo = createTilesRepository(db);
+  const count = await tilesRepo.count();
 
   if (count === 0) {
-    const tilesRepo = createTilesRepository(db);
     const inserted = await tilesRepo.insertManyIgnoreConflicts(sfBoardTiles);
 
     if (inserted !== sfBoardTiles.length) {
-      const after = await db.one<{ count: number }>(
-        "SELECT COUNT(*)::int AS count FROM tiles",
-      );
-      const afterCount = after.count;
+      const afterCount = await tilesRepo.count();
       if (afterCount < sfBoardTiles.length) {
         throw new Error(
           `Failed to seed tiles: inserted=${inserted} expected=${sfBoardTiles.length}`,
@@ -34,9 +28,7 @@ export async function ensureSfBoardSeeded(db: DbClient): Promise<void> {
   }
 
   // If tiles already exist, validate that positions 0..39 are present.
-  const rows: { position: number }[] = await db.manyOrNone(
-    "SELECT position FROM tiles ORDER BY position ASC",
-  );
+  const rows = await tilesRepo.listAll();
   const existingPositions = new Set(rows.map((r) => r.position));
   const missing = requiredPositions().filter((p) => !existingPositions.has(p));
 
@@ -64,11 +56,7 @@ export async function ensureCardsSeeded(db: DbClient): Promise<void> {
     if (inserted !== missing.length) {
       // If we inserted less, it likely means existing constraints/data; treat as error
       // because the deck would be incomplete.
-      const after = await db.one<{ count: number }>(
-        "SELECT COUNT(*)::int AS count FROM cards WHERE deck_type = $1",
-        [deckType],
-      );
-      const afterCount = after.count;
+      const afterCount = await cardsRepo.countByDeckType(deckType);
       if (afterCount < cards.length) {
         throw new Error(
           `Failed to seed cards for ${deckType}: inserted=${inserted} expected=${missing.length}`,

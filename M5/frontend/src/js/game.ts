@@ -899,7 +899,6 @@ async function main(): Promise<void> {
   }
 
   const realtime = await connectRealtime();
-  await realtime.joinGameRoom(gameIdValue);
 
   realtime.on("game:state:update", (payload) => {
     if (!payload || payload.game_id !== gameIdValue) return;
@@ -980,6 +979,9 @@ async function main(): Promise<void> {
       state.players.find((pl) => pl.user_id === p.user.id)?.token_color ?? null;
     renderChatMessage(chatBox, p, tokenColor);
   });
+
+  // Join after registering handlers so "options on join" isn't missed.
+  await realtime.joinGameRoom(gameIdValue);
 
   function renderAll(): void {
     renderMeta(state);

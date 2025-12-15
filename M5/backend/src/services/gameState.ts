@@ -1,4 +1,9 @@
 import type { DbClient } from "../database/dbClient.js";
+import { createGamesRepository } from "../database/repositories/games.js";
+import { createGameParticipantsRepository } from "../database/repositories/gameParticipants.js";
+import { createTilesRepository } from "../database/repositories/tiles.js";
+import { createTransactionsRepository } from "../database/repositories/transactions.js";
+import { createTurnsRepository } from "../database/repositories/turns.js";
 
 export class GameNotFoundError extends Error {
   constructor(gameId: string) {
@@ -103,161 +108,38 @@ export async function buildPublicGameState(
   db: DbClient,
   gameId: string,
 ): Promise<GameStateUpdate> {
-  const game = await db.oneOrNone<{
-    id: string;
-    status: string;
-    turn_index: number;
-    created_by: string;
-  }>(
-    `
-      SELECT id, status, turn_index, created_by
-      FROM games
-      WHERE id = $1
-    `,
-    [gameId],
-  );
+  const gamesRepo = createGamesRepository(db);
+  const game = await gamesRepo.findById(gameId);
   if (!game) throw new GameNotFoundError(gameId);
 
-  const board: BoardTileState[] = await db.manyOrNone(
-    `
-      SELECT
-        t.id,
-        t.position,
-        t.name,
-        t.tile_type,
-        t.property_group,
-        t.purchase_price,
-        t.rent_base,
-        o.participant_id AS owner_participant_id
-      FROM tiles t
-      LEFT JOIN ownerships o
-        ON o.tile_id = t.id
-        AND o.game_id = $1
-      ORDER BY t.position ASC
-    `,
-    [gameId],
-  );
+  const tilesRepo = createTilesRepository(db);
+  const board: BoardTileState[] = await tilesRepo.listBoardState(gameId);
 
-  const players: PublicPlayerState[] = await db.manyOrNone(
-    `
-      SELECT
-        gp.id,
-        gp.user_id,
-        u.display_name,
-        gp.position,
-        gp.cash,
-        gp.jail_turns,
-        gp.goojf_cards,
-        gp.is_bankrupt,
-        gp.in_jail,
-        gp.token_color
-      FROM game_participants gp
-      JOIN users u ON u.id = gp.user_id
-      WHERE gp.game_id = $1
-      ORDER BY gp.joined_at ASC
-    `,
-    [gameId],
-  );
+  const participantsRepo = createGameParticipantsRepository(db);
+  const players: PublicPlayerState[] = (
+    await participantsRepo.listWithUsersByGame(gameId)
+  ).map(({ participant, user }) => ({
+    id: participant.id,
+    user_id: participant.user_id,
+    display_name: user.display_name,
+    position: participant.position,
+    cash: participant.cash,
+    jail_turns: participant.jail_turns,
+    goojf_cards: participant.goojf_cards,
+    is_bankrupt: participant.is_bankrupt,
+    in_jail: participant.in_jail,
+    token_color: participant.token_color,
+  }));
 
-  const recentMoves = await db.manyOrNone<{
-    turn_id: string;
-    participant_id: string;
-    turn_number: number;
-    created_at: string | Date;
-    dice_roll_1: number | null;
-    dice_roll_2: number | null;
-    is_double: boolean | null;
-    previous_position: number | null;
-    new_position: number | null;
-    action_taken: string | null;
-  }>(
-    `
-      SELECT
-        id AS turn_id,
-        participant_id,
-        turn_number,
-        created_at,
-        dice_roll_1,
-        dice_roll_2,
-        is_double,
-        previous_position,
-        new_position,
-        action_taken
-      FROM turns
-      WHERE game_id = $1
-      ORDER BY turn_number DESC
-      LIMIT 50
-    `,
-    [gameId],
-  );
+  const turnsRepo = createTurnsRepository(db);
+  const recentMoves = await turnsRepo.listRecentMovesByGame(gameId, 50);
 
-  const recentTransactions = await db.manyOrNone<{
-    id: string;
-    created_at: string | Date;
-    turn_id: string | null;
-    turn_number: number | null;
-    from_participant_id: string | null;
-    to_participant_id: string | null;
-    amount: number;
-    transaction_type: string;
-    description: string | null;
-  }>(
-    `
-      SELECT
-        tx.id,
-        tx.created_at,
-        tx.turn_id,
-        t.turn_number,
-        tx.from_participant_id,
-        tx.to_participant_id,
-        tx.amount,
-        tx.transaction_type,
-        tx.description
-      FROM transactions tx
-      LEFT JOIN turns t ON t.id = tx.turn_id
-      WHERE tx.game_id = $1
-      ORDER BY tx.created_at DESC
-      LIMIT 100
-    `,
-    [gameId],
-  );
+  const transactionsRepo = createTransactionsRepository(db);
+  const recentTransactions =
+    await transactionsRepo.listRecentByGameWithTurnNumber(gameId, 100);
 
-  const turnRow = await db.one<{ turn_number: number }>(
-    `
-      SELECT COALESCE(MAX(turn_number), 0)::int AS turn_number
-      FROM turns
-      WHERE game_id = $1
-    `,
-    [gameId],
-  );
-
-  const lastRollRow = await db.oneOrNone<{
-    participant_id: string;
-    turn_number: number;
-    dice_roll_1: number | null;
-    dice_roll_2: number | null;
-    is_double: boolean | null;
-    previous_position: number | null;
-    new_position: number | null;
-    action_taken: string | null;
-  }>(
-    `
-      SELECT
-        participant_id,
-        turn_number,
-        dice_roll_1,
-        dice_roll_2,
-        is_double,
-        previous_position,
-        new_position,
-        action_taken
-      FROM turns
-      WHERE game_id = $1
-      ORDER BY turn_number DESC
-      LIMIT 1
-    `,
-    [gameId],
-  );
+  const turnNumber = await turnsRepo.lastTurnNumber(gameId);
+  const lastRollRow = await turnsRepo.findLastRollByGame(gameId);
 
   const currentPlayerId = pickCurrentParticipantId({
     phase: game.status,
@@ -275,7 +157,7 @@ export async function buildPublicGameState(
     players,
     current_player_id: currentPlayerId,
     phase: game.status,
-    turn_number: turnRow.turn_number,
+    turn_number: turnNumber,
     last_roll_participant_id: lastRollRow?.participant_id ?? null,
     last_roll_turn_number: lastRollRow?.turn_number ?? null,
     last_roll_dice_1: lastRollRow?.dice_roll_1 ?? null,
@@ -299,14 +181,8 @@ export async function buildGameStateForUser(
 ): Promise<GameStateForUser> {
   const state = await buildPublicGameState(db, gameId);
 
-  const participant = await db.oneOrNone<{ id: string; cash: number }>(
-    `
-      SELECT id, cash
-      FROM game_participants
-      WHERE game_id = $1 AND user_id = $2
-    `,
-    [gameId, userId],
-  );
+  const participantsRepo = createGameParticipantsRepository(db);
+  const participant = await participantsRepo.findByGameAndUser(gameId, userId);
 
   if (!participant) {
     throw new NotParticipantError();

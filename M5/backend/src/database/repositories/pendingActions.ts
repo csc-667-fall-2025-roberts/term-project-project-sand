@@ -1,6 +1,5 @@
-import type { IDatabase } from "pg-promise";
-import type { IClient } from "pg-promise/typescript/pg-subset.js";
 import { pgPool } from "../index.js";
+import type { DbClient } from "../dbClient.js";
 
 export type PendingActionStatus = "pending" | "completed" | "cancelled";
 
@@ -15,10 +14,63 @@ export interface PendingActionRecord {
   updated_at: Date;
 }
 
-class PendingActionsRepository {
-  constructor(
-    private readonly db: IDatabase<Record<string, unknown>, IClient>,
-  ) {}
+export class PendingActionsRepository {
+  constructor(private readonly db: DbClient) {}
+
+  async findPendingByParticipantForUpdate(
+    gameId: string,
+    participantId: string,
+  ): Promise<Pick<
+    PendingActionRecord,
+    "id" | "action_type" | "payload_json"
+  > | null> {
+    const query = `
+      SELECT id, action_type, payload_json
+      FROM pending_actions
+      WHERE game_id = $1 AND participant_id = $2 AND status = 'pending'
+      ORDER BY created_at DESC
+      LIMIT 1
+      FOR UPDATE
+    `;
+    return this.db.oneOrNone(query, [gameId, participantId]);
+  }
+
+  async findPendingForUpdate(params: {
+    id: string;
+    gameId: string;
+    participantId: string;
+  }): Promise<PendingActionRecord | null> {
+    const query = `
+      SELECT
+        id,
+        game_id,
+        participant_id,
+        action_type,
+        payload_json,
+        status,
+        created_at,
+        updated_at
+      FROM pending_actions
+      WHERE id = $1
+        AND game_id = $2
+        AND participant_id = $3
+        AND status = 'pending'
+      FOR UPDATE
+    `;
+    return this.db.oneOrNone(query, [
+      params.id,
+      params.gameId,
+      params.participantId,
+    ]);
+  }
+
+  async markCompleted(id: string): Promise<void> {
+    await this.markStatus(id, "completed");
+  }
+
+  async markCancelled(id: string): Promise<void> {
+    await this.markStatus(id, "cancelled");
+  }
 
   async create(params: {
     gameId: string;
@@ -103,3 +155,9 @@ class PendingActionsRepository {
 }
 
 export const pendingActionsRepository = new PendingActionsRepository(pgPool);
+
+export function createPendingActionsRepository(
+  db: DbClient,
+): PendingActionsRepository {
+  return new PendingActionsRepository(db);
+}

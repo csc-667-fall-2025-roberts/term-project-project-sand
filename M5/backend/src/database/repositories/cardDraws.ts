@@ -1,6 +1,5 @@
-import type { IDatabase } from "pg-promise";
-import type { IClient } from "pg-promise/typescript/pg-subset.js";
 import { pgPool } from "../index.js";
+import type { DbClient } from "../dbClient.js";
 
 export interface CardDrawRecord {
   id: string;
@@ -12,10 +11,8 @@ export interface CardDrawRecord {
   created_at: Date;
 }
 
-class CardDrawsRepository {
-  constructor(
-    private readonly db: IDatabase<Record<string, unknown>, IClient>,
-  ) {}
+export class CardDrawsRepository {
+  constructor(private readonly db: DbClient) {}
 
   async create(params: {
     gameId: string;
@@ -54,3 +51,7 @@ class CardDrawsRepository {
 }
 
 export const cardDrawsRepository = new CardDrawsRepository(pgPool);
+
+export function createCardDrawsRepository(db: DbClient): CardDrawsRepository {
+  return new CardDrawsRepository(db);
+}

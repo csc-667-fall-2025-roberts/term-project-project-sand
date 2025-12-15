@@ -1,6 +1,5 @@
-import type { IDatabase } from "pg-promise";
-import type { IClient } from "pg-promise/typescript/pg-subset.js";
 import { pgPool } from "../index.js";
+import type { DbClient } from "../dbClient.js";
 import type { UserRecord } from "./users.js";
 
 export interface RefreshTokenRecord {
@@ -17,10 +16,22 @@ export interface RefreshTokenWithUser {
   user: UserRecord;
 }
 
-class RefreshTokensRepository {
-  constructor(
-    private readonly db: IDatabase<Record<string, unknown>, IClient>,
-  ) {}
+interface RefreshTokenWithUserRow {
+  rt_id: string;
+  rt_user_id: string;
+  rt_token_hash: string;
+  rt_expires_at: Date;
+  rt_revoked_at: Date | null;
+  rt_created_at: Date;
+  user_id: string;
+  user_display_name: string;
+  user_email: string;
+  user_created_at: Date;
+  user_updated_at: Date;
+}
+
+export class RefreshTokensRepository {
+  constructor(private readonly db: DbClient) {}
 
   async create(
     userId: string,
@@ -57,7 +68,9 @@ class RefreshTokensRepository {
         AND rt.revoked_at IS NULL
         AND rt.expires_at > now()
     `;
-    const row = await this.db.oneOrNone(query, [tokenHash]);
+    const row = await this.db.oneOrNone<RefreshTokenWithUserRow>(query, [
+      tokenHash,
+    ]);
     if (!row) return null;
 
     return {
@@ -108,3 +121,9 @@ class RefreshTokensRepository {
 }
 
 export const refreshTokensRepository = new RefreshTokensRepository(pgPool);
+
+export function createRefreshTokensRepository(
+  db: DbClient,
+): RefreshTokensRepository {
+  return new RefreshTokensRepository(db);
+}

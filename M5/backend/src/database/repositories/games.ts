@@ -1,6 +1,5 @@
-import type { IDatabase } from "pg-promise";
-import type { IClient } from "pg-promise/typescript/pg-subset.js";
 import { pgPool } from "../index.js";
+import type { DbClient } from "../dbClient.js";
 
 export type GameStatus = "waiting" | "playing" | "ended";
 
@@ -20,10 +19,41 @@ export interface GameRecord {
   updated_at: Date;
 }
 
-class GamesRepository {
-  constructor(
-    private readonly db: IDatabase<Record<string, unknown>, IClient>,
-  ) {}
+export class GamesRepository {
+  constructor(private readonly db: DbClient) {}
+
+  async startPlaying(id: string): Promise<void> {
+    const query = `
+      UPDATE games
+      SET status = 'playing', started_at = now(), turn_index = 0, updated_at = now()
+      WHERE id = $1
+    `;
+    await this.db.none(query, [id]);
+  }
+
+  async findIdByGameCode(gameCode: string): Promise<string | null> {
+    const row = await this.db.oneOrNone<{ id: string }>(
+      "SELECT id FROM games WHERE game_code = $1",
+      [gameCode],
+    );
+    return row?.id ?? null;
+  }
+
+  async deleteById(id: string): Promise<number> {
+    const result = await this.db.result("DELETE FROM games WHERE id = $1", [
+      id,
+    ]);
+    return result.rowCount;
+  }
+
+  async markEnded(id: string): Promise<void> {
+    const query = `
+      UPDATE games
+      SET status = 'ended', ended_at = now(), updated_at = now()
+      WHERE id = $1
+    `;
+    await this.db.none(query, [id]);
+  }
 
   async create(params: {
     name: string;
@@ -181,3 +211,7 @@ class GamesRepository {
 }
 
 export const gamesRepository = new GamesRepository(pgPool);
+
+export function createGamesRepository(db: DbClient): GamesRepository {
+  return new GamesRepository(db);
+}

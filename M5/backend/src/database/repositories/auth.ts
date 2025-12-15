@@ -1,6 +1,5 @@
-import type { IDatabase } from "pg-promise";
-import type { IClient } from "pg-promise/typescript/pg-subset.js";
 import { pgPool } from "../index.js";
+import type { DbClient } from "../dbClient.js";
 import { normalizeEmail, type UserRecord } from "./users.js";
 
 export interface AuthCredentialRecord {
@@ -16,10 +15,21 @@ export interface AuthWithUser {
   user: UserRecord;
 }
 
-class AuthRepository {
-  constructor(
-    private readonly db: IDatabase<Record<string, unknown>, IClient>,
-  ) {}
+interface AuthWithUserRow {
+  auth_id: string;
+  auth_user_id: string;
+  auth_password_hash: string;
+  auth_created_at: Date;
+  auth_updated_at: Date;
+  user_id: string;
+  user_display_name: string;
+  user_email: string;
+  user_created_at: Date;
+  user_updated_at: Date;
+}
+
+export class AuthRepository {
+  constructor(private readonly db: DbClient) {}
 
   async createCredential(
     userId: string,
@@ -51,7 +61,9 @@ class AuthRepository {
       JOIN users u ON u.id = a.user_id
       WHERE u.email = $1
     `;
-    const row = await this.db.oneOrNone(query, [normalizedEmail]);
+    const row = await this.db.oneOrNone<AuthWithUserRow>(query, [
+      normalizedEmail,
+    ]);
     if (!row) return null;
 
     return {
@@ -83,3 +95,7 @@ class AuthRepository {
 }
 
 export const authRepository = new AuthRepository(pgPool);
+
+export function createAuthRepository(db: DbClient): AuthRepository {
+  return new AuthRepository(db);
+}
