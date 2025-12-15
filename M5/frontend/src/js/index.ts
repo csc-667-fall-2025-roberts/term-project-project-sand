@@ -53,7 +53,7 @@ function renderGameCard(
         : "Ended";
 
   wrap.innerHTML = `
-    <div class="flex items-start justify-between gap-3">
+    <div class="flex items-start justify-between gap-2">
       <div class="flex-1">
         <h3 class="mb-1 text-lg font-bold text-gray-800">${escapeHtml(
           game.name,
@@ -64,7 +64,7 @@ function renderGameCard(
             game.game_code,
           )}</span>
         </p>
-        <div class="mt-3 flex flex-wrap items-center gap-3 text-sm">
+        <div class="mt-3 flex flex-wrap items-center gap-2 text-sm">
           <span class="text-gray-600"
             >Players:
             <span class="font-semibold text-gray-800">${game.current_players}/${game.max_players}</span></span

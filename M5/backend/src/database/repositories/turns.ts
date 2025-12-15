@@ -16,7 +16,11 @@ export interface TurnRecord {
 }
 
 export class TurnsRepository {
-  constructor(private readonly db: DbClient) {}
+  private readonly db: DbClient;
+
+  constructor(db: DbClient) {
+    this.db = db;
+  }
 
   async updateOutcome(
     turnId: string,

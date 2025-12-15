@@ -20,7 +20,11 @@ export interface GameRecord {
 }
 
 export class GamesRepository {
-  constructor(private readonly db: DbClient) {}
+  private readonly db: DbClient;
+
+  constructor(db: DbClient) {
+    this.db = db;
+  }
 
   async startPlaying(id: string): Promise<void> {
     const query = `

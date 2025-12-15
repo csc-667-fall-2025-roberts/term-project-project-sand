@@ -96,7 +96,7 @@ export async function buyPropertyAction(
     toParticipantId: null,
     amount: cost,
     transactionType: "purchase",
-    description: "Purchased property",
+    description: `Purchased ${tile.name}`,
     turnId: lastTurn?.id ?? null,
   });
 

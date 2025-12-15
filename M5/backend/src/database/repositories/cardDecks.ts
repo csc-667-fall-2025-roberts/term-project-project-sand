@@ -12,7 +12,11 @@ export interface CardDeckRecord {
 }
 
 export class CardDecksRepository {
-  constructor(private readonly db: DbClient) {}
+  private readonly db: DbClient;
+
+  constructor(db: DbClient) {
+    this.db = db;
+  }
 
   async findByGameAndTypeForUpdate(
     gameId: string,

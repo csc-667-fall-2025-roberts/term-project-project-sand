@@ -2,6 +2,7 @@ import { client } from "./api";
 import type { User } from "./api";
 import UserStorage from "./storage/user";
 import { connectRealtime } from "./realtime";
+import clsx from "clsx";
 
 interface GameState {
   game_id: string;
@@ -83,6 +84,8 @@ interface ChatMessage {
 }
 
 const userStorage = new UserStorage(null);
+let lastHighlightedMoveKey: string | null = null;
+let clearMoveHighlightTimer: number | null = null;
 
 function queryRequired<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);
@@ -185,6 +188,49 @@ function colorForToken(token: string | null): {
   }
 }
 
+function cssColorForToken(token: string | null): string {
+  const c = (token ?? "").toLowerCase();
+  switch (c) {
+    case "red":
+      return "#ef4444";
+    case "blue":
+      return "#3b82f6";
+    case "green":
+      return "#22c55e";
+    case "yellow":
+      return "#f59e0b";
+    case "purple":
+      return "#a855f7";
+    case "black":
+      return "#111827";
+    default:
+      return "#6b7280";
+  }
+}
+
+function withAlphaHex(hex: string, alphaHex: string): string {
+  // `#RRGGBB` -> `#RRGGBBAA`
+  const normalized = hex.trim();
+  if (!normalized.startsWith("#") || normalized.length !== 7) return hex;
+  return normalized + alphaHex;
+}
+
+function tilePlayersBackgroundImage(colors: string[]): string | null {
+  const unique = [...new Set(colors.map((c) => c.trim()).filter(Boolean))];
+  if (unique.length === 0) return null;
+  if (unique.length === 1) return null;
+
+  const n = unique.length;
+  const stops: string[] = [];
+  for (let i = 0; i < n; i += 1) {
+    const start = Math.floor((i / n) * 100);
+    const end = Math.floor(((i + 1) / n) * 100);
+    const c = withAlphaHex(unique[i], "1A");
+    stops.push(`${c} ${start}%`, `${c} ${end}%`);
+  }
+  return `linear-gradient(135deg, ${stops.join(", ")})`;
+}
+
 function renderBoard(state: GameState): void {
   const container = queryRequired<HTMLDivElement>("boardTiles");
   container.innerHTML = "";
@@ -201,17 +247,38 @@ function renderBoard(state: GameState): void {
       : null;
     const ownerStyle = isOwned ? colorForToken(ownerToken) : null;
 
-    const el = document.createElement("div");
-    el.className = `rounded-lg border border-gray-200 bg-white p-2 text-xs shadow-sm ${
-      ownerStyle ? `ring-2 ring-offset-1 ${ownerStyle.ringClass}` : ""
-    }`;
-
     const playersHere = state.players.filter(
       (p) => p.position === tile.position,
     );
+    const playerColors = playersHere.map((p) =>
+      cssColorForToken(p.token_color),
+    );
+
+    const el = document.createElement("div");
+    el.className = clsx(
+      "flex min-h-24 flex-col gap-1 rounded-lg border p-1 text-xs shadow-sm",
+      {
+        "border-gray-200 bg-white": true,
+        "ring-2 ring-offset-1": ownerStyle,
+        [ownerStyle?.ringClass ?? "ring-gray-300"]: ownerStyle,
+      },
+    );
+
+    const bgImage = tilePlayersBackgroundImage(playerColors);
+    if (playersHere.length === 1 && playerColors.length === 1) {
+      el.style.backgroundImage = "";
+      el.style.backgroundColor = withAlphaHex(playerColors[0], "1A");
+    } else if (bgImage) {
+      el.style.backgroundColor = "";
+      el.style.backgroundImage = bgImage;
+    } else {
+      el.style.backgroundImage = "";
+      el.style.backgroundColor = "";
+    }
+
     const tokensHtml =
       playersHere.length > 0
-        ? `<div class="mt-1 flex flex-wrap gap-1">${playersHere
+        ? `<div class="flex flex-wrap gap-1">${playersHere
             .map((p) => {
               const style = colorForToken(p.token_color);
               return `<span class="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[10px] font-semibold ring-1 ${style.ringClass}">
@@ -227,7 +294,7 @@ function renderBoard(state: GameState): void {
     const ownerTag = isOwned
       ? (() => {
           const label = ownerIsSelf ? "Yours" : "Owned";
-          return `<span class="ml-2 inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[10px] font-semibold ring-1 ${
+          return `<span class="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[10px] font-semibold ring-1 ${
             ownerStyle?.ringClass ?? "ring-gray-300"
           }" title="${ownerIsSelf ? "Owned by you" : "Owned by another player"}">
             <span class="inline-block h-2.5 w-2.5 rounded-full ${
@@ -246,19 +313,21 @@ function renderBoard(state: GameState): void {
         : "";
 
     el.innerHTML = `
-      <div class="flex items-start justify-between gap-1">
-        <div>
-          <div class="font-semibold text-gray-900">${tile.position}. ${escapeHtml(
-            tile.name,
-          )}</div>
-          <div class="text-[10px] text-gray-500">${escapeHtml(
-            tile.tile_type,
-          )}</div>
+      <div class="flex text-wrap items-start justify-between gap-1">
+        <div class="font-semibold text-gray-900">
+          ${tile.position}. ${escapeHtml(tile.name)}
         </div>
         ${ownerTag}
       </div>
-      ${price}
-      ${tokensHtml}
+      <div class="flex flex-wrap items-end justify-between gap-1 flex-1">
+        <div>
+          <div class="text-[10px] text-gray-500">
+            ${escapeHtml(tile.tile_type)}
+          </div>
+          ${price}
+        </div>
+        ${tokensHtml}
+      </div>
     `;
 
     container.appendChild(el);
@@ -276,9 +345,10 @@ function renderPlayers(state: GameState): void {
     const playerColor = colorForToken(p.token_color);
 
     const row = document.createElement("div");
-    row.className = `rounded-lg border p-3 ${
-      isCurrent ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-white"
-    }`;
+    row.className = clsx("rounded-lg border p-2", {
+      "border-amber-300 bg-amber-50": isCurrent,
+      "border-gray-200 bg-white": !isCurrent,
+    });
 
     row.innerHTML = `
       <div class="flex items-center justify-between">
@@ -287,14 +357,22 @@ function renderPlayers(state: GameState): void {
             ${escapeHtml(p.display_name)}${isSelf ? " (You)" : ""}
           </div>
           <div class="text-xs text-gray-600">Pos: ${p.position} • Cash: $${p.cash}</div>
-          <div class="text-[11px] text-gray-600">
+          ${
+            derivedInJail || p.goojf_cards > 0
+              ? `<div class="text-[11px] text-gray-600">
             ${derivedInJail ? `In jail (${p.jail_turns}/3)` : ""}
             ${p.goojf_cards > 0 ? `${derivedInJail ? " • " : ""}GOJF: ${p.goojf_cards}` : ""}
-          </div>
+          </div>`
+              : ""
+          }
         </div>
-        <div class="text-xs text-gray-700">
+        ${
+          p.is_bankrupt || derivedInJail
+            ? `<div class="text-xs text-gray-700">
           ${p.is_bankrupt ? "Bankrupt" : derivedInJail ? "In Jail" : ""}
-        </div>
+        </div>`
+            : ""
+        }
       </div>
     `;
 
@@ -332,6 +410,22 @@ function renderMoves(state: GameState): void {
     (a, b) => (b.turn_number ?? 0) - (a.turn_number ?? 0),
   );
 
+  const latest = moves.length > 0 ? moves[0] : null;
+  const latestKey = latest ? latest.turn_id : null;
+  if (latestKey && latestKey !== lastHighlightedMoveKey) {
+    lastHighlightedMoveKey = latestKey;
+    if (clearMoveHighlightTimer != null) {
+      window.clearTimeout(clearMoveHighlightTimer);
+    }
+    clearMoveHighlightTimer = window.setTimeout(() => {
+      const el = document.getElementById(`move-${latestKey}`);
+      if (el) {
+        el.classList.remove("bg-amber-50", "ring-1", "ring-amber-200");
+      }
+      clearMoveHighlightTimer = null;
+    }, 3000);
+  }
+
   if (moves.length === 0) {
     const empty = document.createElement("div");
     empty.className = "text-xs text-gray-500";
@@ -358,7 +452,13 @@ function renderMoves(state: GameState): void {
       activeCount > 0 ? Math.floor((m.turn_number - 1) / activeCount) + 1 : 0;
 
     const row = document.createElement("div");
-    row.className = "mb-1 text-xs text-gray-700";
+    row.id = `move-${m.turn_id}`;
+    const shouldHighlight = Boolean(
+      m.turn_id && m.turn_id === lastHighlightedMoveKey,
+    );
+    row.className = clsx("rounded-md text-xs text-gray-700", {
+      "bg-amber-50 ring-1 ring-amber-200": shouldHighlight,
+    });
     row.innerHTML = `
       <span class="text-gray-500">R${round} • #${m.turn_number}:</span>
       <span class="${whoColor.textClass} font-semibold">${escapeHtml(who)}</span>
@@ -408,7 +508,7 @@ function renderTransactions(state: GameState): void {
     const prefix = move ? `R${round ?? 0} • #${move} • ` : "";
 
     const row = document.createElement("div");
-    row.className = "mb-1 text-xs text-gray-700";
+    row.className = "text-xs text-gray-700";
     const fromColor = colorForToken(
       tx.from_participant_id
         ? (tokenByParticipant.get(tx.from_participant_id) ?? null)
@@ -537,8 +637,6 @@ function renderOptions(
   container.innerHTML = "";
 
   const canAct = state.phase === "playing" && isMyTurn(state);
-  const me = userStorage.get();
-  const isCreator = Boolean(me?.id) && me?.id === state.created_by;
   const selfPlayer = state.players.find(
     (p) => p.id === state.self.participant_id,
   );
@@ -605,6 +703,8 @@ function renderOptions(
           : "";
 
       if (action === "buy_property") {
+        const tile = tileId ? state.board.find((t) => t.id === tileId) : null;
+        const tileName = tile?.name ? String(tile.name) : "property";
         const cost =
           typeof opt["cost"] === "number" ? Math.trunc(opt["cost"]) : null;
         const selfCash = selfPlayer?.cash ?? 0;
@@ -612,9 +712,9 @@ function renderOptions(
         const label =
           cost != null
             ? canAfford
-              ? `Buy property ($${cost})`
-              : `Buy property ($${cost}) — insufficient funds`
-            : "Buy property (invalid cost)";
+              ? `Buy ${tileName} ($${cost})`
+              : `Buy ${tileName} ($${cost}) — insufficient funds`
+            : `Buy ${tileName} (invalid cost)`;
 
         addButton({
           label,
@@ -709,20 +809,13 @@ function renderOptions(
       }
     }
 
-    if (isCreator) {
-      addButton({
-        label: "End game (delete)",
-        variant: "secondary",
-        onClick: async () => {
-          await handlers.onDeleteGame();
-        },
-      });
-    }
     addSellButtons();
     return;
   }
 
   if (state.phase === "waiting") {
+    const me = userStorage.get();
+    const isCreator = Boolean(me?.id) && me?.id === state.created_by;
     const canStart = isCreator && state.players.length >= 2;
 
     if (isCreator) {
@@ -732,13 +825,6 @@ function renderOptions(
         onClick: async () => {
           if (!canStart) return;
           await handlers.onStartGame();
-        },
-      });
-      addButton({
-        label: "End game (delete)",
-        variant: "secondary",
-        onClick: async () => {
-          await handlers.onDeleteGame();
         },
       });
       return;
@@ -761,15 +847,6 @@ function renderOptions(
       disabled: true,
       onClick: () => undefined,
     });
-    if (isCreator) {
-      addButton({
-        label: "End game (delete)",
-        variant: "secondary",
-        onClick: async () => {
-          await handlers.onDeleteGame();
-        },
-      });
-    }
     return;
   }
 
@@ -810,17 +887,29 @@ function renderOptions(
     onClick: handlers.onEndTurn,
   });
 
-  if (isCreator) {
-    addButton({
-      label: "End game (delete)",
-      variant: "secondary",
-      onClick: async () => {
-        await handlers.onDeleteGame();
-      },
-    });
-  }
-
   addSellButtons();
+}
+
+function renderHostControls(
+  state: GameState,
+  handlers: { onDeleteGame: () => Promise<void> },
+): void {
+  const details = queryRequired<HTMLDetailsElement>("hostControlsDetails");
+  const container = queryRequired<HTMLDivElement>("hostControlsList");
+  container.innerHTML = "";
+
+  const me = userStorage.get();
+  const isCreator = Boolean(me?.id) && me?.id === state.created_by;
+  if (!isCreator) return;
+
+  details.classList.remove("hidden");
+  const deleteBtn = document.createElement("component-button");
+  deleteBtn.setAttribute("type", "button");
+  deleteBtn.setAttribute("variant", "secondary");
+  deleteBtn.className = "w-full";
+  deleteBtn.textContent = "End game (delete)";
+  deleteBtn.addEventListener("click", () => void handlers.onDeleteGame());
+  container.appendChild(deleteBtn);
 }
 
 async function ensureAuthed(): Promise<User> {
@@ -901,11 +990,12 @@ async function main(): Promise<void> {
   const realtime = await connectRealtime();
 
   realtime.on("game:state:update", (payload) => {
-    if (!payload || payload.game_id !== gameIdValue) return;
+    const p = payload as Partial<GameState> | null;
+    if (!p || p.game_id !== gameIdValue) return;
     const beforeKey = lastTurnKey;
     state = {
       ...state,
-      ...payload,
+      ...p,
     };
     lastTurnKey = `${state.turn_number}:${state.current_player_id ?? ""}`;
     if (lastTurnKey !== beforeKey) {
@@ -927,8 +1017,9 @@ async function main(): Promise<void> {
   });
 
   realtime.on("game:player:options", (payload) => {
-    if (!payload || payload.game_id !== gameIdValue) return;
-    currentOptions = payload as PlayerOptionsPayload;
+    const p = payload as PlayerOptionsPayload | null;
+    if (!p || p.game_id !== gameIdValue) return;
+    currentOptions = p;
     renderAll();
   });
 
@@ -983,12 +1074,30 @@ async function main(): Promise<void> {
   // Join after registering handlers so "options on join" isn't missed.
   await realtime.joinGameRoom(gameIdValue);
 
+  const onDeleteGame = async (): Promise<void> => {
+    const ok = window.confirm(
+      "End and delete this game? This cannot be undone.",
+    );
+    if (!ok) return;
+    const typed = window.prompt("Type DELETE to confirm:", "");
+    if (typed !== "DELETE") return;
+
+    try {
+      await client.deleteGame(gameIdValue);
+      window.location.href = "/";
+    } catch (error) {
+      console.error(error);
+      setActionBanner("Unable to delete game.");
+    }
+  };
+
   function renderAll(): void {
     renderMeta(state);
     renderBoard(state);
     renderPlayers(state);
     renderMoves(state);
     renderTransactions(state);
+    renderHostControls(state, { onDeleteGame });
     renderOptions(
       state,
       currentOptions,
@@ -1053,18 +1162,7 @@ async function main(): Promise<void> {
           }
         },
         onDeleteGame: async () => {
-          const ok = window.confirm(
-            "End and delete this game? This cannot be undone.",
-          );
-          if (!ok) return;
-
-          try {
-            await client.deleteGame(gameIdValue);
-            window.location.href = "/";
-          } catch (error) {
-            console.error(error);
-            setActionBanner("Unable to delete game.");
-          }
+          await onDeleteGame();
         },
         onBuy: async (tileId, pendingActionId) => {
           setActionBanner(null);

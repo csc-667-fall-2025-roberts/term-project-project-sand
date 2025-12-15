@@ -6,8 +6,8 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "format": "prettier --write src/**/*",
-    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src",
+    "lint": "eslint src",
     "preview": "vite preview"
   },
   "keywords": [],

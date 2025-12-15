@@ -14,7 +14,11 @@ export interface TransactionRecord {
 }
 
 export class TransactionsRepository {
-  constructor(private readonly db: DbClient) {}
+  private readonly db: DbClient;
+
+  constructor(db: DbClient) {
+    this.db = db;
+  }
 
   async listRecentByGameWithTurnNumber(
     gameId: string,

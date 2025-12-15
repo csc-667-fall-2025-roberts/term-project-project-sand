@@ -9,98 +9,124 @@
     <link rel="stylesheet" href="/css/tailwind.css" />
     <script type="module" src="/js/game.js"></script>
     <script type="module" src="/js/components/layout-header.js"></script>
-    <script type="module" src="/js/components/button.js"></script>
     <script type="module" src="/js/components/field.js"></script>
     <script type="module" src="/js/components/card.js"></script>
     <script type="module" src="/js/components/select.js"></script>
   </head>
   <body>
     <layout-header></layout-header>
-    <main class="container mx-auto grid grid-cols-12 gap-4 p-2 py-4 sm:p-4">
-      <component-card class="col-span-full">
+    <main class="flex flex-col gap-4 p-2 py-4 sm:p-4">
+      <component-card>
         <div class="flex flex-col gap-2">
-          <div class="flex items-center justify-between gap-2">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
               <div class="text-xl font-bold" id="gameTitle">Game</div>
               <div class="text-sm text-gray-600" id="gameMeta"></div>
             </div>
-            <div class="flex items-center gap-2">
-              <component-button id="leaveGame" size="sm" variant="secondary"
-                >Back to Dashboard</component-button
-              >
-            </div>
+            <component-button
+              id="leaveGame"
+              class="self-start"
+              size="sm"
+              variant="secondary"
+              >Back to Dashboard</component-button
+            >
           </div>
           <div
             id="gameBanner"
-            class="hidden rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            class="hidden flex-1 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
           ></div>
+          <details
+            id="hostControlsDetails"
+            class="hidden flex-1 rounded-lg border border-gray-200 bg-white p-2"
+          >
+            <summary
+              class="cursor-pointer text-sm font-semibold text-gray-800 select-none"
+            >
+              Host controls
+            </summary>
+            <div class="mt-3 flex flex-col gap-2" id="hostControlsList"></div>
+          </details>
         </div>
       </component-card>
 
-      <component-card class="col-span-full lg:col-span-7">
-        <div class="flex flex-col gap-4">
-          <div class="flex items-center justify-between">
-            <div class="text-xl font-bold">Board</div>
-            <div class="text-sm text-gray-700">
-              Your balance:
-              <span class="font-semibold" id="selfBalance">-</span>
+      <div class="grid grid-cols-12 gap-4">
+        <component-card
+          class="order-1 col-span-full lg:order-2 lg:col-span-3 xl:col-span-2 2xl:col-span-2"
+        >
+          <div class="flex flex-col gap-4">
+            <div class="text-xl font-bold">Actions</div>
+            <div class="flex flex-col gap-2">
+              <div id="actionOptions" class="flex flex-col gap-2"></div>
             </div>
           </div>
-          <div
-            id="boardTiles"
-            class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4"
-          ></div>
-        </div>
-      </component-card>
+        </component-card>
+        <component-card
+          class="order-2 col-span-full lg:order-1 lg:col-span-9 xl:col-span-10 2xl:col-span-10"
+        >
+          <div class="flex flex-col gap-2">
+            <div class="flex flex-col gap-2">
+              <div class="text-xl font-bold">Players</div>
+              <div
+                id="playersList"
+                class="grid grid-cols-2 gap-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8"
+              ></div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="text-xl font-bold">Board</div>
+              <div class="text-sm text-gray-700">
+                Your balance:
+                <span class="font-semibold" id="selfBalance">-</span>
+              </div>
+            </div>
+            <div
+              id="boardTiles"
+              class="grid grid-cols-2 gap-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8"
+            ></div>
+          </div>
+        </component-card>
+      </div>
 
-      <component-card class="col-span-full lg:col-span-5">
-        <div class="flex flex-col gap-4">
-          <div class="text-xl font-bold">Players</div>
-          <div id="playersList" class="flex flex-col gap-2"></div>
-
-          <div class="border-t border-gray-200 pt-4">
+      <div class="grid h-min grid-cols-1 gap-4 lg:grid-cols-2">
+        <component-card>
+          <div class="flex flex-col gap-4">
             <div class="text-xl font-bold">Moves</div>
             <div
               id="movesList"
-              class="mt-2 max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 text-sm"
+              class="flex h-24 flex-col gap-1 overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 text-sm"
             ></div>
           </div>
-
-          <div class="border-t border-gray-200 pt-4">
+        </component-card>
+        <component-card>
+          <div class="flex flex-col gap-4">
             <div class="text-xl font-bold">Transactions</div>
             <div
               id="transactionsList"
-              class="mt-2 max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 text-sm"
+              class="flex h-24 flex-col gap-1 overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 text-sm"
             ></div>
           </div>
+        </component-card>
+      </div>
 
-          <div class="border-t border-gray-200 pt-4">
-            <div class="text-xl font-bold">Actions</div>
-            <div class="mt-3 flex flex-col gap-2">
-              <div id="actionOptions" class="mt-2 flex flex-col gap-2"></div>
-            </div>
-          </div>
-
-          <div class="border-t border-gray-200 pt-4">
-            <div class="text-xl font-bold">Game Chat</div>
-            <div
-              id="gameChatMessages"
-              class="h-48 min-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white p-2"
-            ></div>
-            <div class="mt-2 grid grid-cols-12 items-center gap-2">
-              <component-field
-                class="col-span-full sm:col-span-9"
-                type="text"
-                name="gameChatMessage"
-                placeholder="Message"
-              ></component-field>
-              <component-button
-                id="sendGameChat"
-                class="col-span-full w-full sm:col-span-3"
-                type="button"
-                >Send</component-button
-              >
-            </div>
+      <component-card>
+        <div class="flex flex-col gap-4">
+          <div class="text-xl font-bold">Game Chat</div>
+          <div
+            id="gameChatMessages"
+            class="h-48 min-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white p-2"
+          ></div>
+          <div class="grid grid-cols-12 items-center gap-2">
+            <component-field
+              class="col-span-full sm:col-span-10"
+              type="text"
+              name="gameChatMessage"
+              placeholder="Message"
+            ></component-field>
+            <component-button
+              id="sendGameChat"
+              class="col-span-full w-full sm:col-span-2"
+              type="button"
+              >Send</component-button
+            >
           </div>
         </div>
       </component-card>

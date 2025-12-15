@@ -29,7 +29,11 @@ interface AuthWithUserRow {
 }
 
 export class AuthRepository {
-  constructor(private readonly db: DbClient) {}
+  private readonly db: DbClient;
+
+  constructor(db: DbClient) {
+    this.db = db;
+  }
 
   async createCredential(
     userId: string,

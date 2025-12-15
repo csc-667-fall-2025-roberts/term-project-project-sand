@@ -46,7 +46,11 @@ interface ParticipantWithUserRow {
 }
 
 export class GameParticipantsRepository {
-  constructor(private readonly db: DbClient) {}
+  private readonly db: DbClient;
+
+  constructor(db: DbClient) {
+    this.db = db;
+  }
 
   async useGoojfAndReleaseFromJail(participantId: string): Promise<void> {
     const query = `

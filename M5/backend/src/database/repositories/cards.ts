@@ -22,7 +22,11 @@ export interface NewCard {
 }
 
 export class CardsRepository {
-  constructor(private readonly db: DbClient) {}
+  private readonly db: DbClient;
+
+  constructor(db: DbClient) {
+    this.db = db;
+  }
 
   async countByDeckType(deckType: DeckType): Promise<number> {
     const query = `

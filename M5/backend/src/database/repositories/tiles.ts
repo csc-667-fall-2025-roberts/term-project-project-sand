@@ -36,7 +36,11 @@ export interface NewTile {
 }
 
 export class TilesRepository {
-  constructor(private readonly db: DbClient) {}
+  private readonly db: DbClient;
+
+  constructor(db: DbClient) {
+    this.db = db;
+  }
 
   async findByPosition(
     position: number,

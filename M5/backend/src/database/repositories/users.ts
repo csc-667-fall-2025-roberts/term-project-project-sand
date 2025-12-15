@@ -18,7 +18,11 @@ export function normalizeDisplayName(displayName: string): string {
 }
 
 export class UsersRepository {
-  constructor(private readonly db: DbClient) {}
+  private readonly db: DbClient;
+
+  constructor(db: DbClient) {
+    this.db = db;
+  }
 
   async create(displayName: string, email: string): Promise<UserRecord> {
     const normalizedEmail = normalizeEmail(email);

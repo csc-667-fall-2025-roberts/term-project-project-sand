@@ -12,7 +12,11 @@ export interface CardDrawRecord {
 }
 
 export class CardDrawsRepository {
-  constructor(private readonly db: DbClient) {}
+  private readonly db: DbClient;
+
+  constructor(db: DbClient) {
+    this.db = db;
+  }
 
   async create(params: {
     gameId: string;

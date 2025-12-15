@@ -15,7 +15,11 @@ export interface PendingActionRecord {
 }
 
 export class PendingActionsRepository {
-  constructor(private readonly db: DbClient) {}
+  private readonly db: DbClient;
+
+  constructor(db: DbClient) {
+    this.db = db;
+  }
 
   async findPendingByParticipantForUpdate(
     gameId: string,

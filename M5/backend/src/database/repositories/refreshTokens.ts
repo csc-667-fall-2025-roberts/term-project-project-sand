@@ -31,7 +31,11 @@ interface RefreshTokenWithUserRow {
 }
 
 export class RefreshTokensRepository {
-  constructor(private readonly db: DbClient) {}
+  private readonly db: DbClient;
+
+  constructor(db: DbClient) {
+    this.db = db;
+  }
 
   async create(
     userId: string,

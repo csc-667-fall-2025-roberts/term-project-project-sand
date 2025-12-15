@@ -14,7 +14,11 @@ export interface OwnershipRecord {
 }
 
 export class OwnershipsRepository {
-  constructor(private readonly db: DbClient) {}
+  private readonly db: DbClient;
+
+  constructor(db: DbClient) {
+    this.db = db;
+  }
 
   async deleteById(id: string): Promise<void> {
     await this.db.none("DELETE FROM ownerships WHERE id = $1", [id]);
