@@ -9,6 +9,7 @@ import { createTurnsRepository } from "../../database/repositories/turns.js";
 import { buildPublicGameState } from "../gameState.js";
 import { buildOptionsPayloadFromPendingAction } from "../pendingActionOptions.js";
 import type { GameRealtimeEvent } from "./events.js";
+import { upgradeCostForGroup } from "./shared/gameMath.js";
 
 export type SellPropertyResult =
   | { kind: "not_found" }
@@ -62,7 +63,8 @@ export async function sellPropertyAction(
     return { kind: "not_sellable" };
   }
 
-  const saleValue = Math.floor(price / 2);
+  const houses = Math.max(0, Math.floor(own.houses ?? 0));
+  const saleValue = Math.floor(price / 2) + (upgradeCostForGroup(tile.property_group) * houses / 2);
 
   await ownershipsRepo.deleteById(own.id);
 
