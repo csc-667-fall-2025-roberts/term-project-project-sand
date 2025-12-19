@@ -14,6 +14,7 @@ import { payRent } from "./handlers/payRent.js";
 import { payDebt } from "./handlers/payDebt.js";
 import { declareBankruptcy } from "./handlers/declareBankruptcy.js";
 import { sellProperty } from "./handlers/sellProperty.js";
+import { upgradeProperty } from "./handlers/upgradeProperty.js";
 import { endTurn } from "./handlers/endTurn.js";
 
 export const gamesRouter = Router()
@@ -31,4 +32,5 @@ export const gamesRouter = Router()
   .post("/games/:gameId/debts/pay", payDebt)
   .post("/games/:gameId/debts/bankrupt", declareBankruptcy)
   .post("/games/:gameId/properties/:propertyId/sell", sellProperty)
+  .post("/games/:gameId/properties/:propertyId/upgrade", upgradeProperty)
   .post("/games/:gameId/turn/end", endTurn);
