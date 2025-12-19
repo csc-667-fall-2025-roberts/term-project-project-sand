@@ -63,7 +63,7 @@ export async function sellPropertyAction(
     return { kind: "not_sellable" };
   }
 
-  const houses = Math.max(0, Math.floor(own.houses ?? 0));
+  const houses = Math.max(0, Math.floor(own.houses));
   const saleValue = Math.floor(price / 2) + (upgradeCostForGroup(tile.property_group) * houses / 2);
 
   await ownershipsRepo.deleteById(own.id);
