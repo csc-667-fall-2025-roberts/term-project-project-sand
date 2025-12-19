@@ -625,6 +625,8 @@ export async function rollTurnAction(
             const rent = computeRent({
               rent_base: landed.rent_base,
               purchase_price: landed.purchase_price,
+              houses: ownership.houses,
+              hotels: ownership.hotels,
             });
 
             const pa = await pendingActionsRepo.create({

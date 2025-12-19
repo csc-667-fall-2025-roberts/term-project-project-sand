@@ -1,11 +1,22 @@
 export function computeRent(tile: {
   rent_base: number | null;
   purchase_price: number | null;
+  houses?: number | null;
+  hotels?: number | null;
 }): number {
-  if (tile.rent_base != null) return tile.rent_base;
-  if (tile.purchase_price != null)
-    return Math.max(1, Math.floor(tile.purchase_price / 10));
-  return 0;
+  const base =
+    tile.rent_base != null
+      ? tile.rent_base
+      : tile.purchase_price != null
+        ? Math.max(1, Math.floor(tile.purchase_price / 10))
+        : 0;
+
+  const houses = Math.max(0, Math.floor(tile.houses ?? 0));
+  const hotels = Math.max(0, Math.floor(tile.hotels ?? 0));
+
+  const multiplier = hotels > 0 ? 6 : 1 + Math.min(4, houses);
+
+  return Math.max(0, Math.floor(base * multiplier));
 }
 
 export function taxForTileName(name: string): number {

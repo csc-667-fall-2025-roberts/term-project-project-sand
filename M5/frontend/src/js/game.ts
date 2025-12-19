@@ -47,6 +47,9 @@ interface GameState {
     purchase_price: number | null;
     rent_base: number | null;
     owner_participant_id: string | null;
+    houses: number | null;
+    hotels: number | null;
+    is_mortgaged: boolean | null;
   }[];
   players: {
     id: string;
@@ -309,6 +312,13 @@ function renderBoard(state: GameState): void {
         })()
       : "";
 
+    const buildingHtml =
+      tile.owner_participant_id && (tile.houses || tile.hotels)
+        ? `<div class="text-[10px] font-semibold text-gray-800">
+            ${tile.hotels ? "🏨 Hotel" : `🏠 Houses: ${tile.houses ?? 0}`}
+          </div>`
+        : "";
+
     const price =
       tile.purchase_price != null
         ? `<div class="text-[10px] text-gray-600">$${tile.purchase_price}</div>`
@@ -326,6 +336,7 @@ function renderBoard(state: GameState): void {
           <div class="text-[10px] text-gray-500">
             ${escapeHtml(tile.tile_type)}
           </div>
+          ${buildingHtml}
           ${price}
         </div>
         ${tokensHtml}
@@ -917,6 +928,106 @@ function renderOptions(
   addSellButtons();
 }
 
+
+function renderPropertyUpgrades(
+  state: GameState,
+  pending: PlayerOptionsPayload | null,
+  handlers: { onUpgradeProperty: (tileId: string) => Promise<void> },
+): void {
+  const container = document.getElementById("propertyUpgrades");
+  if (!container) return;
+
+  const canAct = state.phase === "playing" && isMyTurn(state) && !pending;
+
+  const owned = state.board
+    .filter(
+      (t) =>
+        t.owner_participant_id === state.self.participant_id &&
+        t.tile_type === "property",
+    )
+    .sort((a, b) => a.position - b.position);
+
+  if (owned.length === 0) {
+    container.innerHTML =
+      '<div class="text-xs text-gray-500">You don\'t own any upgradable properties yet.</div>';
+    return;
+  }
+
+  const costForGroup = (group: string | null): number => {
+    switch ((group ?? "").toLowerCase()) {
+      case "brown":
+      case "light_blue":
+        return 50;
+      case "pink":
+      case "orange":
+        return 100;
+      case "red":
+      case "yellow":
+        return 150;
+      case "green":
+      case "dark_blue":
+        return 200;
+      default:
+        return 0;
+    }
+  };
+
+  container.innerHTML = "";
+
+  for (const tile of owned) {
+    const houses = tile.houses ?? 0;
+    const hotels = tile.hotels ?? 0;
+    const cost = costForGroup(tile.property_group);
+    const maxed = hotels > 0;
+    const label = maxed ? "🏨 Hotel" : `🏠 Houses: ${houses}`;
+
+    const row = document.createElement("div");
+    row.className =
+      "flex items-center justify-between gap-2 rounded-md border bg-white p-2";
+
+    const left = document.createElement("div");
+    left.className = "min-w-0";
+    left.innerHTML = `
+      <div class="text-xs font-semibold text-gray-900 truncate">${escapeHtml(
+        tile.name,
+      )}</div>
+      <div class="text-[11px] text-gray-600">${escapeHtml(
+        tile.property_group ?? "—",
+      )} • ${label} • Upgrade: $${cost || "—"}</div>
+    `;
+
+    const btn = document.createElement("button");
+    btn.className = clsx(
+      "rounded-md px-2 py-1 text-xs font-semibold ring-1 ring-inset",
+      {
+        "bg-gray-100 text-gray-400 ring-gray-200 cursor-not-allowed":
+          !canAct || maxed || cost <= 0,
+        "bg-white text-gray-800 ring-gray-300 hover:bg-gray-50":
+          canAct && !maxed && cost > 0,
+      },
+    );
+    btn.textContent = maxed ? "Max" : "Upgrade";
+    btn.disabled = !canAct || maxed || cost <= 0;
+
+    btn.addEventListener("click", async () => {
+      if (btn.disabled) return;
+      try {
+        setActionBanner(null);
+        await handlers.onUpgradeProperty(tile.id);
+      } catch (err) {
+        console.error(err);
+        setActionBanner(
+          err instanceof Error ? err.message : "Unable to upgrade property.",
+        );
+      }
+    });
+
+    row.appendChild(left);
+    row.appendChild(btn);
+    container.appendChild(row);
+  }
+}
+
 function renderHostControls(
   state: GameState,
   handlers: { onDeleteGame: () => Promise<void> },
@@ -1270,6 +1381,12 @@ async function main(): Promise<void> {
         },
       },
     );
+
+    renderPropertyUpgrades(state, currentOptions, {
+      onUpgradeProperty: async (tileId) => {
+        await client.upgradeProperty(gameIdValue, tileId);
+      },
+    });
   }
 
   renderAll();

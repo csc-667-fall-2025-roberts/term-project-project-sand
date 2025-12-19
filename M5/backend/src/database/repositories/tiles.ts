@@ -90,6 +90,9 @@ export class TilesRepository {
       purchase_price: number | null;
       rent_base: number | null;
       owner_participant_id: string | null;
+      houses: number | null;
+      hotels: number | null;
+      is_mortgaged: boolean | null;
     }[]
   > {
     const query = `
@@ -101,7 +104,10 @@ export class TilesRepository {
         t.property_group,
         t.purchase_price,
         t.rent_base,
-        o.participant_id AS owner_participant_id
+        o.participant_id AS owner_participant_id,
+        o.houses,
+        o.hotels,
+        o.is_mortgaged
       FROM tiles t
       LEFT JOIN ownerships o
         ON o.tile_id = t.id
