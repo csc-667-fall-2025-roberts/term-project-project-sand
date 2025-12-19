@@ -29,16 +29,20 @@ export function upgradeCostForGroup(group: string | null): number {
   //this section may have to change to match our coloring schemes
   switch ((group ?? "").toLowerCase()) {
     case "brown":
-    case "light_blue":
+      return 50;
+    case "light-blue":
       return 50;
     case "pink":
+      return 100;
     case "orange":
       return 100;
     case "red":
+      return 150;
     case "yellow":
       return 150;
     case "green":
-    case "dark_blue":
+      return 200;
+    case "dark-blue":
       return 200;
     default:
       return 0;

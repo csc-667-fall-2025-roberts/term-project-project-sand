@@ -10,6 +10,7 @@ import { buildPublicGameState } from "../gameState.js";
 import type { GameRealtimeEvent } from "./events.js";
 import { computeCurrentTurnPlayer } from "./shared/gameProgression.js";
 import { upgradeCostForGroup } from "./shared/gameMath.js";
+import logger from "../../logger.js";
 
 export type UpgradePropertyResult = 
     | { kind: "not_found"}
@@ -40,7 +41,8 @@ export async function upgradePropertyAction(
     const transactionsRepo = createTransactionsRepository(db);
 
     const game = await gamesRepo.findById(params.gameId);
-    if(!game) return { kind: "not_found"};
+    logger.error("output", "43");
+    if(!game) return { kind: "not_found"};  ///
     if (game.status !== "playing") return { kind: "bad_phase"};
 
     const currentTurn = await computeCurrentTurnPlayer(db, params.gameId);
@@ -54,7 +56,8 @@ export async function upgradePropertyAction(
     if (existingPending) return { kind: "has_pending"};
 
     const tile = await tilesRepo.findById(params.propertyId);
-    if (!tile) return { kind: "not_found"};
+    logger.error("output", "59");
+    if (!tile) return { kind: "not_found"}; ///
 
     if (tile.tile_type !== "property") return { kind: "not_upgradable"};
 
@@ -66,7 +69,7 @@ export async function upgradePropertyAction(
     if (cost <= 0) return { kind: "not_upgradable"};
 
     const houses = Math.max(0, Math.floor(own.houses ?? 0));
-    const hotels = Math.max(0, Math.floor(own.hotels ?? 0));
+    //const hotels = Math.max(0, Math.floor(own.hotels ?? 0));
 
     const next =
         houses < 4
@@ -81,9 +84,7 @@ export async function upgradePropertyAction(
 
     //apply game updates here
     await db.none(
-        "UPDATE ownerships\n" + 
-        "SET houses = $3, hotels $4, updated_at = now()\n" +
-        "WHERE game_id = $1 AND tile_id = $2",
+        "UPDATE ownerships SET houses = $3, hotels = $4, updated_at = now() WHERE game_id = $1 AND tile_id = $2",
         [params.gameId, params.propertyId, next.houses, next.hotels]
     );
 

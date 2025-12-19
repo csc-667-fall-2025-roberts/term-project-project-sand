@@ -23,6 +23,7 @@ export async function upgradeProperty(req: AuthenticatedRequest, res: Response) 
             propertyId
         });
 
+        logger.error("output", output);
         if (output.kind === "not_found")
             return res.status(404).json({ error: "Game or property not found"});
         if (output.kind === "bad_phase")
