@@ -12,117 +12,134 @@ import { computeCurrentTurnPlayer } from "./shared/gameProgression.js";
 import { upgradeCostForGroup } from "./shared/gameMath.js";
 import logger from "../../logger.js";
 
-export type UpgradePropertyResult = 
-    | { kind: "not_found"}
-    | { kind: "bad_phase"}
-    | { kind: "not_participant"}
-    | { kind: "not_your_turn"}
-    | { kind: "has_pending"}
-    | { kind: "not_owner"}
-    | { kind: "not_upgradable"}
-    | { kind: "max_level"}
-    | { kind: "insufficient_funds"; required: number; cash: number }
-    | { kind: "ok"; events: GameRealtimeEvent[] };
+export type UpgradePropertyResult =
+  | { kind: "not_found" }
+  | { kind: "bad_phase" }
+  | { kind: "not_participant" }
+  | { kind: "not_your_turn" }
+  | { kind: "has_pending" }
+  | { kind: "not_owner" }
+  | { kind: "not_upgradable" }
+  | { kind: "max_level" }
+  | { kind: "insufficient_funds"; required: number; cash: number }
+  | { kind: "ok"; events: GameRealtimeEvent[] };
 
 export async function upgradePropertyAction(
-    db: DbClient,
-    params: {
-        userId: string;
-        gameId: string;
-        propertyId: string;
-    },
+  db: DbClient,
+  params: {
+    userId: string;
+    gameId: string;
+    propertyId: string;
+  },
 ): Promise<UpgradePropertyResult> {
-    const gamesRepo = createGamesRepository(db);
-    const participantsRepo = createGameParticipantsRepository(db);
-    const pendingActionsRepo = createPendingActionsRepository(db);
-    const tilesRepo = createTilesRepository(db);
-    const ownershipRepo = createOwnershipsRepository(db);
-    const turnsRepo = createTurnsRepository(db);
-    const transactionsRepo = createTransactionsRepository(db);
+  const gamesRepo = createGamesRepository(db);
+  const participantsRepo = createGameParticipantsRepository(db);
+  const pendingActionsRepo = createPendingActionsRepository(db);
+  const tilesRepo = createTilesRepository(db);
+  const ownershipRepo = createOwnershipsRepository(db);
+  const turnsRepo = createTurnsRepository(db);
+  const transactionsRepo = createTransactionsRepository(db);
 
-    const game = await gamesRepo.findById(params.gameId);
-    logger.error("output", "43");
-    if(!game) return { kind: "not_found"};  ///
-    if (game.status !== "playing") return { kind: "bad_phase"};
+  const game = await gamesRepo.findById(params.gameId);
+  logger.error("output", "43");
+  if (!game) return { kind: "not_found" }; ///
+  if (game.status !== "playing") return { kind: "bad_phase" };
 
-    const currentTurn = await computeCurrentTurnPlayer(db, params.gameId);
-    if (!currentTurn) return { kind: "bad_phase"};
-    if (currentTurn.userId !== params.userId) return { kind: "not_your_turn"};
+  const currentTurn = await computeCurrentTurnPlayer(db, params.gameId);
+  if (!currentTurn) return { kind: "bad_phase" };
+  if (currentTurn.userId !== params.userId) return { kind: "not_your_turn" };
 
-    const participant = await participantsRepo.findByGameAndUser(params.gameId, params.userId);
-    if (!participant) return { kind: "not_participant"};
+  const participant = await participantsRepo.findByGameAndUser(
+    params.gameId,
+    params.userId,
+  );
+  if (!participant) return { kind: "not_participant" };
 
-    const existingPending = await pendingActionsRepo.findPendingByParticipant(params.gameId, participant.id);
-    if (existingPending) return { kind: "has_pending"};
+  const existingPending = await pendingActionsRepo.findPendingByParticipant(
+    params.gameId,
+    participant.id,
+  );
+  if (existingPending) return { kind: "has_pending" };
 
-    const tile = await tilesRepo.findById(params.propertyId);
-    logger.error("output", "59");
-    if (!tile) return { kind: "not_found"}; ///
+  const tile = await tilesRepo.findById(params.propertyId);
+  logger.error("output", "59");
+  if (!tile) return { kind: "not_found" }; ///
 
-    if (tile.tile_type !== "property") return { kind: "not_upgradable"};
+  if (tile.tile_type !== "property") return { kind: "not_upgradable" };
 
-    const own = await ownershipRepo.findByGameAndTile(params.gameId, params.propertyId);
-    if (!own || own.participant_id !== participant.id) return { kind: "not_owner"};
-    if (own.is_mortgaged) return { kind: "not_upgradable"}
+  const own = await ownershipRepo.findByGameAndTile(
+    params.gameId,
+    params.propertyId,
+  );
+  if (!own || own.participant_id !== participant.id)
+    return { kind: "not_owner" };
+  if (own.is_mortgaged) return { kind: "not_upgradable" };
 
-    const cost = upgradeCostForGroup(tile.property_group);
-    if (cost <= 0) return { kind: "not_upgradable"};
+  const cost = upgradeCostForGroup(tile.property_group);
+  if (cost <= 0) return { kind: "not_upgradable" };
 
-    const houses = Math.max(0, Math.floor(own.houses ?? 0));
-    //const hotels = Math.max(0, Math.floor(own.hotels ?? 0));
+  const houses = Math.max(0, Math.floor(own.houses ?? 0));
+  //const hotels = Math.max(0, Math.floor(own.hotels ?? 0));
 
-    const next =
-        houses < 4
-            ? { houses: houses + 1, hotels: 0 }
-            : { hosues: 0, hotels: 1 };
+  const next =
+    houses < 4 ? { houses: houses + 1, hotels: 0 } : { hosues: 0, hotels: 1 };
 
-    const cash = await participantsRepo.findCashByIdAndGame(participant.id, params.gameId);
-    const currentCash = cash ?? 0;
-    if (currentCash < cost) {
-        return { kind: "insufficient_funds", required: cost, cash: currentCash};
-    }
+  const cash = await participantsRepo.findCashByIdAndGame(
+    participant.id,
+    params.gameId,
+  );
+  const currentCash = cash ?? 0;
+  if (currentCash < cost) {
+    return { kind: "insufficient_funds", required: cost, cash: currentCash };
+  }
 
-    //apply game updates here
-    await db.none(
-        "UPDATE ownerships SET houses = $3, hotels = $4, updated_at = now() WHERE game_id = $1 AND tile_id = $2",
-        [params.gameId, params.propertyId, next.houses, next.hotels]
-    );
+  //apply game updates here
+  await db.none(
+    "UPDATE ownerships SET houses = $3, hotels = $4, updated_at = now() WHERE game_id = $1 AND tile_id = $2",
+    [params.gameId, params.propertyId, next.houses, next.hotels],
+  );
 
-    const newBalance = await participantsRepo.incrementCash(participant.id, -cost);
+  const newBalance = await participantsRepo.incrementCash(
+    participant.id,
+    -cost,
+  );
 
-    const currentTurnRow = await turnsRepo.findLastByGameAndParticipant(params.gameId, participant.id);
+  const currentTurnRow = await turnsRepo.findLastByGameAndParticipant(
+    params.gameId,
+    participant.id,
+  );
 
-    await transactionsRepo.create({
-        gameId: params.gameId,
-        turnId: currentTurnRow?.id ?? null,
-        fromParticipantId: participant.id,
-        toParticipantId: null,
-        amount: cost,
-        transactionType: "upgrade_property",
-        description:
-            next.hotels > 0
-            ? 'Built a hotel on ${tile.name}'
-            : 'Built house #${next.houses} on ${tile.name}'
-    });
+  await transactionsRepo.create({
+    gameId: params.gameId,
+    turnId: currentTurnRow?.id ?? null,
+    fromParticipantId: participant.id,
+    toParticipantId: null,
+    amount: cost,
+    transactionType: "upgrade_property",
+    description:
+      next.hotels > 0
+        ? "Built a hotel on ${tile.name}"
+        : "Built house #${next.houses} on ${tile.name}",
+  });
 
-    const publicState = await buildPublicGameState(db, params.gameId);
+  const publicState = await buildPublicGameState(db, params.gameId);
 
-    const events: GameRealtimeEvent[] = [
-        {
-            kind: "gameStateUpdate",
-            gameId: params.gameId,
-            payload: publicState
-        },
-        {
-            kind: "privateBalanceUpdate",
-            userId: params.userId,
-            payload: {
-                game_id: params.gameId,
-                player_id: participant.id,
-                balance: newBalance
-            }
-        }
-    ];
+  const events: GameRealtimeEvent[] = [
+    {
+      kind: "gameStateUpdate",
+      gameId: params.gameId,
+      payload: publicState,
+    },
+    {
+      kind: "privateBalanceUpdate",
+      userId: params.userId,
+      payload: {
+        game_id: params.gameId,
+        player_id: participant.id,
+        balance: newBalance,
+      },
+    },
+  ];
 
-    return { kind: "ok", events};
+  return { kind: "ok", events };
 }

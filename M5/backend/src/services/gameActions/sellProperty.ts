@@ -64,7 +64,9 @@ export async function sellPropertyAction(
   }
 
   const houses = Math.max(0, Math.floor(own.houses));
-  const saleValue = Math.floor(price / 2) + (upgradeCostForGroup(tile.property_group) * houses / 2);
+  const saleValue =
+    Math.floor(price / 2) +
+    (upgradeCostForGroup(tile.property_group) * houses) / 2;
 
   await ownershipsRepo.deleteById(own.id);
 

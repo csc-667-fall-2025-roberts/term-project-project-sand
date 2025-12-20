@@ -618,15 +618,17 @@ class ApiClient {
 
   async upgradeProperty(gameId: string, tileId: string): Promise<void> {
     //const res = await fetch(`/api/games/${gameId}/properties/${tileId}/upgrade`, { method: "POST" });
-    const response =  await this.fetchInternal(`/games/${gameId}/properties/${tileId}/upgrade`, {
-      method: "POST"
-    });
+    const response = await this.fetchInternal(
+      `/games/${gameId}/properties/${tileId}/upgrade`,
+      {
+        method: "POST",
+      },
+    );
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
       throw new Error(body?.error ?? "Upgrade failed");
     }
   }
-
 }
 
 function resolveApiOrigin(): string {

@@ -928,7 +928,6 @@ function renderOptions(
   addSellButtons();
 }
 
-
 function renderPropertyUpgrades(
   state: GameState,
   pending: PlayerOptionsPayload | null,
@@ -1000,7 +999,7 @@ function renderPropertyUpgrades(
     btn.className = clsx(
       "rounded-md px-2 py-1 text-xs font-semibold ring-1 ring-inset",
       {
-        "bg-gray-100 text-gray-400 ring-gray-200 cursor-not-allowed":
+        "cursor-not-allowed bg-gray-100 text-gray-400 ring-gray-200":
           !canAct || maxed || cost <= 0,
         "bg-white text-gray-800 ring-gray-300 hover:bg-gray-50":
           canAct && !maxed && cost > 0,
