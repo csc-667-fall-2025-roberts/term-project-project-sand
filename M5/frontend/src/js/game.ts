@@ -2,6 +2,7 @@ import { client } from "./api";
 import type { User } from "./api";
 import UserStorage from "./storage/user";
 import { connectRealtime } from "./realtime";
+import { markCanceled } from "../../../backend/src/database/repositories/pendingActions.ts";
 import clsx from "clsx";
 
 interface GameState {
@@ -1325,9 +1326,10 @@ async function main(): Promise<void> {
         },
         onSkip: async (_pendingActionId) => {
           // Backend uses end-turn to cancel optional purchase pending actions.
+          markCanceled(_pendingActionId);
           //await client.endTurn(gameIdValue);
           currentOptions = null;
-          //hasRolledThisTurn = false;
+          hasRolledThisTurn = false;
           renderAll();
         },
         onSellProperty: async (tileId) => {
