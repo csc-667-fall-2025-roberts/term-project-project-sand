@@ -41,6 +41,9 @@ export interface BoardTileState {
   purchase_price: number | null;
   rent_base: number | null;
   owner_participant_id: string | null;
+  houses: number | null;
+  hotels: number | null;
+  is_mortgaged: boolean | null;
 }
 
 export interface GameStateUpdate {
