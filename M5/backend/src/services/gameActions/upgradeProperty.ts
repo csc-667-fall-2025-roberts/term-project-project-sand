@@ -10,7 +10,8 @@ import { buildPublicGameState } from "../gameState.js";
 import type { GameRealtimeEvent } from "./events.js";
 import { computeCurrentTurnPlayer } from "./shared/gameProgression.js";
 import { upgradeCostForGroup } from "./shared/gameMath.js";
-import logger from "../../logger.js";
+
+const MAX_HOUSES_BEFORE_HOTEL = 4;
 
 export type UpgradePropertyResult =
   | { kind: "not_found" }
@@ -41,8 +42,7 @@ export async function upgradePropertyAction(
   const transactionsRepo = createTransactionsRepository(db);
 
   const game = await gamesRepo.findById(params.gameId);
-  logger.error("output", "43");
-  if (!game) return { kind: "not_found" }; ///
+  if (!game) return { kind: "not_found" };
   if (game.status !== "playing") return { kind: "bad_phase" };
 
   const currentTurn = await computeCurrentTurnPlayer(db, params.gameId);
@@ -62,8 +62,7 @@ export async function upgradePropertyAction(
   if (existingPending) return { kind: "has_pending" };
 
   const tile = await tilesRepo.findById(params.propertyId);
-  logger.error("output", "59");
-  if (!tile) return { kind: "not_found" }; ///
+  if (!tile) return { kind: "not_found" };
 
   if (tile.tile_type !== "property") return { kind: "not_upgradable" };
 
@@ -79,10 +78,15 @@ export async function upgradePropertyAction(
   if (cost <= 0) return { kind: "not_upgradable" };
 
   const houses = Math.max(0, Math.floor(own.houses ?? 0));
-  //const hotels = Math.max(0, Math.floor(own.hotels ?? 0));
+  const hotels = Math.max(0, Math.floor(own.hotels ?? 0));
+
+  // Can't upgrade beyond hotel level
+  if (hotels > 0) return { kind: "max_level" };
 
   const next =
-    houses < 4 ? { houses: houses + 1, hotels: 0 } : { hosues: 0, hotels: 1 };
+    houses < MAX_HOUSES_BEFORE_HOTEL
+      ? { houses: houses + 1, hotels: 0 }
+      : { houses: 0, hotels: 1 };
 
   const cash = await participantsRepo.findCashByIdAndGame(
     participant.id,
@@ -93,7 +97,6 @@ export async function upgradePropertyAction(
     return { kind: "insufficient_funds", required: cost, cash: currentCash };
   }
 
-  //apply game updates here
   await db.none(
     "UPDATE ownerships SET houses = $3, hotels = $4, updated_at = now() WHERE game_id = $1 AND tile_id = $2",
     [params.gameId, params.propertyId, next.houses, next.hotels],
@@ -118,8 +121,8 @@ export async function upgradePropertyAction(
     transactionType: "upgrade_property",
     description:
       next.hotels > 0
-        ? "Built a hotel on ${tile.name}"
-        : "Built house #${next.houses} on ${tile.name}",
+        ? `Built a hotel on ${tile.name}`
+        : `Built house #${next.houses} on ${tile.name}`,
   });
 
   const publicState = await buildPublicGameState(db, params.gameId);

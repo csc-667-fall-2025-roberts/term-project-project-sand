@@ -25,8 +25,6 @@ export async function upgradeProperty(
       gameId,
       propertyId,
     });
-
-    logger.error("output", output);
     if (output.kind === "not_found")
       return res.status(404).json({ error: "Game or property not found" });
     if (output.kind === "bad_phase")
@@ -42,11 +40,14 @@ export async function upgradeProperty(
     if (output.kind === "not_owner")
       return res.status(403).json({ error: "You do not own this property" });
     if (output.kind === "not_upgradable")
-      return res.status(409).json({ error: "This property is not upgradable" });
+      return res.status(409).json({
+        error:
+          "This property cannot be upgraded (may be mortgaged or not part of a valid property group)",
+      });
     if (output.kind === "max_level")
-      return res
-        .status(409)
-        .json({ error: "This property is already fully upgraded" });
+      return res.status(409).json({
+        error: "This property is already fully upgraded with a hotel",
+      });
     if (output.kind === "insufficient_funds")
       return res.status(409).json({
         error: "Insufficient funds",

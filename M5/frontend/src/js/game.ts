@@ -955,7 +955,7 @@ function renderPropertyUpgrades(
   const costForGroup = (group: string | null): number => {
     switch ((group ?? "").toLowerCase()) {
       case "brown":
-      case "light_blue":
+      case "light-blue":
         return 50;
       case "pink":
       case "orange":
@@ -964,7 +964,7 @@ function renderPropertyUpgrades(
       case "yellow":
         return 150;
       case "green":
-      case "dark_blue":
+      case "dark-blue":
         return 200;
       default:
         return 0;
