@@ -1329,7 +1329,7 @@ async function main(): Promise<void> {
           markCanceled(_pendingActionId);
           //await client.endTurn(gameIdValue);
           currentOptions = null;
-          hasRolledThisTurn = false;
+          //hasRolledThisTurn = false;
           renderAll();
         },
         onSellProperty: async (tileId) => {
