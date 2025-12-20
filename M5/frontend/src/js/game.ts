@@ -1325,9 +1325,9 @@ async function main(): Promise<void> {
         },
         onSkip: async (_pendingActionId) => {
           // Backend uses end-turn to cancel optional purchase pending actions.
-          await client.endTurn(gameIdValue);
+          //await client.endTurn(gameIdValue);
           currentOptions = null;
-          hasRolledThisTurn = false;
+          //hasRolledThisTurn = false;
           renderAll();
         },
         onSellProperty: async (tileId) => {
